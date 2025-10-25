@@ -3,6 +3,9 @@
  * @version 1.0.0
  */
 
+/* Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
 /* Container */
 .swp-container {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -68,6 +71,11 @@
 .swp-btn-primary:hover {
     background: #0056b3;
     border-color: #0056b3;
+}
+
+.swp-btn-icon-only {
+    padding: 8px 12px;
+    justify-content: center;
 }
 
 .swp-icon {

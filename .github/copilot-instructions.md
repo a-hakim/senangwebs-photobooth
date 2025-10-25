@@ -40,30 +40,30 @@ class SWP {
 
 ### Development Commands
 ```bash
-npm run dev      # Webpack dev server @ localhost:3000 with HMR
+npm run dev      # Webpack watch mode with auto-rebuild (no dev server)
 npm run build    # Production: dist/swp.min.js (~10KB) + swp.min.css (~4KB)
-npm run watch    # Auto-rebuild without dev server
 ```
+**Note:** There is no dev server configured. Open `examples/index.html` directly in browser or use your own local server. The `dev` script runs webpack in watch mode for auto-rebuilding.
 
 ### Build Configuration (webpack.config.js)
-- **Single entry point:** `src/js/swp.js` (no separate demo bundle)
-- **CSS imports in JS:** `import '../css/swp.css'` at top of swp.js
+- **Dual entry points:** `swp.js` and `styles.css` (separate entries, not CSS-in-JS)
 - **Output naming:**
   - Dev: `swp.js` + `swp.css`
-  - Prod: `swp.min.js` + `swp.min.css`
+  - Prod: Uses same filenames (no .min suffix - configured elsewhere)
 - **UMD library config:** Exports as `SWP` global + default ES6 export
 - **NO HtmlWebpackPlugin** - Demo pages reference dist/ files via script tags
+- **CSS extraction:** MiniCssExtractPlugin extracts CSS to separate file
 
 ### File Structure
 ```
 src/
-├── js/swp.js      # Single 530-line class - ALL library logic
+├── js/swp.js      # Single ~630-line class - ALL library logic
 ├── css/swp.css    # Complete styling (~6KB)
 dist/              # Generated build artifacts
-├── swp.min.js     # Production library bundle
-└── swp.min.css    # Production styles
+├── swp.js         # Built library bundle
+└── swp.css        # Built styles
 examples/
-└── index.html     # Standalone example (also uses dist/ files)
+└── index.html     # Standalone example (uses dist/ files via script tags)
 spec.md            # Original specification - source of truth
 ```
 
@@ -86,6 +86,34 @@ this.currentState = {
 ```
 State is applied via Canvas transforms + CSS filter strings in `drawImage()`.
 
+### Resize Functionality
+Canvas dimensions dynamically adjust to match loaded image:
+```javascript
+// In loadImage() - canvas resizes to exact image dimensions
+this.canvas.width = img.width;
+this.canvas.height = img.height;
+```
+Users can manually resize via UI panel which updates canvas dimensions and redraws.
+
+### Crop Functionality
+Crop method exists but **NO UI implementation** - only programmatic access:
+```javascript
+// crop(x, y, width, height) at lines ~519-538
+crop(x, y, width, height) {
+  // Creates temp canvas, draws cropped region from main canvas
+  // Loads result as new currentImage
+  tempCtx.drawImage(this.canvas, x, y, width, height, 0, 0, width, height);
+}
+```
+**Important:** Crops from current canvas state (including all applied transforms), not original image. Coordinates are relative to current canvas dimensions.
+
+**Missing UI features** (mentioned in spec.md but not implemented):
+- Interactive crop selection overlay
+- Aspect ratio presets (1:1, 4:3, 16:9, freeform)
+- Visual crop handles/rectangle
+
+If adding crop UI, follow the pattern: `createCropPanelHTML()` → add toolbar button → `handleAction('toggle-crop')` → bind mouse events for selection rectangle.
+
 ### Event System
 Simple pub-sub pattern (`on()` / `emit()`):
 ```javascript
@@ -99,6 +127,7 @@ All UI is **template strings** in `create*HTML()` methods:
 - `createToolbarHTML()` - Toolbar with data-action attributes
 - `createAdjustmentsPanelHTML()` - Sliders for brightness/contrast/saturation
 - `createFiltersPanelHTML()` - Filter button grid
+- `createResizePanelHTML()` - Canvas dimension controls
 
 Event delegation via `data-action` attributes → `handleAction(action)` dispatcher.
 
@@ -115,6 +144,17 @@ ctx.filter = this.getFilterString(); // Applied before drawImage()
 ```
 
 ## Common Development Tasks
+
+### Adding Interactive Crop UI
+Currently crop only works programmatically (`swp.crop(x, y, w, h)`). To add UI:
+1. Create `createCropPanelHTML()` with aspect ratio buttons
+2. Add crop mode toggle to toolbar: `<button data-action="toggle-crop">Crop</button>`
+3. Add case in `handleAction()`: `case 'toggle-crop': this.enableCropMode(); break;`
+4. Implement selection rectangle with mouse events:
+   - `mousedown`: Start selection at (x, y)
+   - `mousemove`: Draw selection rectangle overlay
+   - `mouseup`: Call `this.crop(x, y, width, height)`
+5. Use CSS absolute positioning for overlay on `.swp-canvas-container`
 
 ### Adding a New Filter
 1. Add to `createFiltersPanelHTML()` button grid
@@ -209,5 +249,4 @@ swpInstance.applyFilter('grayscale');
 ## Documentation References
 - `spec.md` - Original feature specification (source of truth)
 - `README.md` - API documentation and usage examples
-- `BUILD.md` - Detailed build system documentation
 - `examples/index.html` - Standalone usage example (uses built dist/ files)

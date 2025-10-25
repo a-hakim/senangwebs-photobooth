@@ -166,18 +166,36 @@ The SWP library will generate a user-friendly interface within the specified con
 <html>
 <head>
     <title>SenangWebs Photobooth</title>
-    <link rel="stylesheet" href="senangwebs-photobooth.css">
+    <link rel="stylesheet" href="swp.css">
 </head>
 <body>
-    <div data-swp>
-      <div data-swp-tools></div>
-      <div data-swp-canvas></div>
-    </div>
+    <!-- Basic initialization -->
+    <div data-swp></div>
+    
+    <!-- With configuration -->
+    <div data-swp
+         data-swp-width="900"
+         data-swp-height="600"
+         data-swp-show-labels="false"></div>
+    
+    <!-- With custom labels -->
+    <div data-swp
+         data-swp-labels="upload: 'Muat Naik'; resize: 'Tukar Saiz'; save: 'Simpan'"></div>
 
     <script src="swp.js"></script>
 </body>
 </html>
 ```
+
+**Supported Data Attributes:**
+- `data-swp` - Enables auto-initialization
+- `data-swp-width` - Canvas width in pixels
+- `data-swp-height` - Canvas height in pixels
+- `data-swp-image-url` - URL of image to load on initialization
+- `data-swp-show-icons` - Show/hide toolbar icons ("true" or "false")
+- `data-swp-show-labels` - Show/hide toolbar labels ("true" or "false")
+- `data-swp-labels` - Custom button labels in simple format (`key: 'value'; key2: 'value2'`) or JSON format
+
 ### JS/Programmatic Approach
 
 ```html

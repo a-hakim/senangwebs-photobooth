@@ -12,7 +12,21 @@ class SWP {
             this.options = {
                 imageUrl: options.imageUrl || null,
                 width: options.width || 800,
-                height: options.height || 600
+                height: options.height || 600,
+                showIcons: options.showIcons !== undefined ? options.showIcons : true,
+                showLabels: options.showLabels !== undefined ? options.showLabels : true,
+                labels: {
+                    upload: options.labels?.upload !== undefined ? options.labels.upload : 'Upload',
+                    rotateLeft: options.labels?.rotateLeft !== undefined ? options.labels.rotateLeft : null,
+                    rotateRight: options.labels?.rotateRight !== undefined ? options.labels.rotateRight : null,
+                    flipH: options.labels?.flipH !== undefined ? options.labels.flipH : null,
+                    flipV: options.labels?.flipV !== undefined ? options.labels.flipV : null,
+                    resize: options.labels?.resize !== undefined ? options.labels.resize : 'Resize',
+                    adjust: options.labels?.adjust !== undefined ? options.labels.adjust : 'Adjust',
+                    filters: options.labels?.filters !== undefined ? options.labels.filters : 'Filters',
+                    reset: options.labels?.reset !== undefined ? options.labels.reset : 'Reset',
+                    save: options.labels?.save !== undefined ? options.labels.save : 'Save'
+                }
             };
 
             this.canvas = null;
@@ -96,52 +110,37 @@ class SWP {
         }
 
         createToolbarHTML() {
+            const { showIcons, showLabels, labels } = this.options;
+            
+            const createButton = (action, icon, label, title) => {
+                const showIcon = showIcons ? `<span class="swp-icon"><i class="${icon}"></i></span>` : '';
+                const showLabel = showLabels && label !== null ? `<span>${label}</span>` : '';
+                return `<button class="swp-btn${!showLabel ? ' swp-btn-icon-only' : ''}" data-action="${action}" title="${title}">${showIcon}${showLabel}</button>`;
+            };
+            
             return `
                 <div class="swp-toolbar-group">
-                    <button class="swp-btn" data-action="upload" title="Upload Image">
-                        <span class="swp-icon">📁</span>
-                        <span>Upload</span>
-                    </button>
+                    ${createButton('upload', 'fas fa-upload', labels.upload, 'Upload Image')}
                     <input type="file" id="swp-file-input" accept="image/*" style="display: none;">
                 </div>
                 <div class="swp-toolbar-group">
-                    <button class="swp-btn" data-action="rotate-left" title="Rotate Left">
-                        <span class="swp-icon">↶</span>
-                    </button>
-                    <button class="swp-btn" data-action="rotate-right" title="Rotate Right">
-                        <span class="swp-icon">↷</span>
-                    </button>
-                    <button class="swp-btn" data-action="flip-h" title="Flip Horizontal">
-                        <span class="swp-icon">⇄</span>
-                    </button>
-                    <button class="swp-btn" data-action="flip-v" title="Flip Vertical">
-                        <span class="swp-icon">⇅</span>
-                    </button>
+                    ${createButton('rotate-left', 'fas fa-undo', labels.rotateLeft, 'Rotate Left')}
+                    ${createButton('rotate-right', 'fas fa-redo', labels.rotateRight, 'Rotate Right')}
+                    ${createButton('flip-h', 'fas fa-arrows-alt-h', labels.flipH, 'Flip Horizontal')}
+                    ${createButton('flip-v', 'fas fa-arrows-alt-v', labels.flipV, 'Flip Vertical')}
                 </div>
                 <div class="swp-toolbar-group">
-                    <button class="swp-btn" data-action="toggle-resize" title="Resize">
-                        <span class="swp-icon">📐</span>
-                        <span>Resize</span>
-                    </button>
+                    ${createButton('toggle-resize', 'fas fa-expand-arrows-alt', labels.resize, 'Resize')}
                 </div>
                 <div class="swp-toolbar-group">
-                    <button class="swp-btn" data-action="toggle-adjustments" title="Adjustments">
-                        <span class="swp-icon">🎨</span>
-                        <span>Adjust</span>
-                    </button>
-                    <button class="swp-btn" data-action="toggle-filters" title="Filters">
-                        <span class="swp-icon">✨</span>
-                        <span>Filters</span>
-                    </button>
+                    ${createButton('toggle-adjustments', 'fas fa-sliders-h', labels.adjust, 'Adjustments')}
+                    ${createButton('toggle-filters', 'fas fa-magic', labels.filters, 'Filters')}
                 </div>
                 <div class="swp-toolbar-group">
-                    <button class="swp-btn" data-action="reset" title="Reset">
-                        <span class="swp-icon">↺</span>
-                        <span>Reset</span>
-                    </button>
-                    <button class="swp-btn swp-btn-primary" data-action="download" title="Download">
-                        <span class="swp-icon">💾</span>
-                        <span>Save</span>
+                    ${createButton('reset', 'fas fa-history', labels.reset, 'Reset')}
+                    <button class="swp-btn swp-btn-primary${!showLabels || labels.save === null ? ' swp-btn-icon-only' : ''}" data-action="download" title="Download">
+                        ${showIcons ? '<span class="swp-icon"><i class="fas fa-download"></i></span>' : ''}
+                        ${showLabels && labels.save !== null ? `<span>${labels.save}</span>` : ''}
                     </button>
                 </div>
             `;
@@ -614,7 +613,56 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         const declarativeContainers = document.querySelectorAll('[data-swp]');
         declarativeContainers.forEach(container => {
-            new SWP(container);
+            // Parse data attributes for options
+            const options = {};
+            
+            // Parse basic options
+            if (container.dataset.swpImageUrl) {
+                options.imageUrl = container.dataset.swpImageUrl;
+            }
+            if (container.dataset.swpWidth) {
+                options.width = parseInt(container.dataset.swpWidth);
+            }
+            if (container.dataset.swpHeight) {
+                options.height = parseInt(container.dataset.swpHeight);
+            }
+            
+            // Parse boolean options
+            if (container.dataset.swpShowIcons !== undefined) {
+                options.showIcons = container.dataset.swpShowIcons !== 'false';
+            }
+            if (container.dataset.swpShowLabels !== undefined) {
+                options.showLabels = container.dataset.swpShowLabels !== 'false';
+            }
+            
+            // Parse labels object
+            if (container.dataset.swpLabels) {
+                try {
+                    // Support both JSON and simple key:value format
+                    let labelsStr = container.dataset.swpLabels.trim();
+                    
+                    // If it looks like JSON, parse as JSON
+                    if (labelsStr.startsWith('{')) {
+                        options.labels = JSON.parse(labelsStr);
+                    } else {
+                        // Parse simple format: "upload: 'text'; resize: 'text'"
+                        options.labels = {};
+                        const pairs = labelsStr.split(';');
+                        pairs.forEach(pair => {
+                            const [key, value] = pair.split(':').map(s => s.trim());
+                            if (key && value) {
+                                // Remove quotes and parse null
+                                const cleanValue = value.replace(/^['"]|['"]$/g, '');
+                                options.labels[key] = cleanValue === 'null' ? null : cleanValue;
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to parse data-swp-labels:', e);
+                }
+            }
+            
+            new SWP(container, options);
         });
     });
 }

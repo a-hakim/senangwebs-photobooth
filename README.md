@@ -72,12 +72,35 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
 
 ### Declarative Approach
 
+Use HTML data attributes for zero-JavaScript configuration:
+
 ```html
-<div data-swp>
-    <div data-swp-tools></div>
-    <div data-swp-canvas></div>
-</div>
+<!-- Basic -->
+<div data-swp></div>
+
+<!-- With configuration -->
+<div data-swp
+     data-swp-width="900"
+     data-swp-height="600"
+     data-swp-show-labels="false"></div>
+
+<!-- With custom labels (simple format) -->
+<div data-swp
+     data-swp-labels="upload: 'Muat Naik'; save: 'Simpan'; reset: 'Set Semula'"></div>
+
+<!-- With custom labels (JSON format) -->
+<div data-swp
+     data-swp-labels='{"upload":"Télécharger","save":"Enregistrer"}'></div>
 ```
+
+**Available Data Attributes:**
+- `data-swp` - Enable auto-initialization
+- `data-swp-width` - Canvas width (number)
+- `data-swp-height` - Canvas height (number)
+- `data-swp-image-url` - Initial image URL
+- `data-swp-show-icons` - Show/hide icons ("true" or "false")
+- `data-swp-show-labels` - Show/hide labels ("true" or "false")
+- `data-swp-labels` - Custom labels (see formats above)
 
 The library will automatically initialize when the DOM is ready.
 
@@ -93,6 +116,45 @@ const swp = new SWP(container, options);
 - `imageUrl` (String) - URL of the image to load
 - `width` (Number) - Width of the editor in pixels (default: 800)
 - `height` (Number) - Height of the editor in pixels (default: 600)
+- `showIcons` (Boolean) - Show icons in toolbar buttons (default: true)
+- `showLabels` (Boolean) - Show text labels in toolbar buttons (default: true)
+- `labels` (Object) - Custom labels for toolbar buttons
+  - `upload` (String|null) - Label for upload button (default: 'Upload')
+  - `rotateLeft` (String|null) - Label for rotate left button (default: null)
+  - `rotateRight` (String|null) - Label for rotate right button (default: null)
+  - `flipH` (String|null) - Label for flip horizontal button (default: null)
+  - `flipV` (String|null) - Label for flip vertical button (default: null)
+  - `resize` (String|null) - Label for resize button (default: 'Resize')
+  - `adjust` (String|null) - Label for adjustments button (default: 'Adjust')
+  - `filters` (String|null) - Label for filters button (default: 'Filters')
+  - `reset` (String|null) - Label for reset button (default: 'Reset')
+  - `save` (String|null) - Label for save button (default: 'Save')
+
+**Customization Examples:**
+
+```javascript
+// Icons only (compact view)
+const swp = new SWP(container, {
+    showLabels: false
+});
+
+// Custom labels (multilingual support)
+const swp = new SWP(container, {
+    labels: {
+        upload: 'Télécharger',
+        save: 'Enregistrer',
+        reset: 'Réinitialiser'
+    }
+});
+
+// Hide specific labels (set to null)
+const swp = new SWP(container, {
+    labels: {
+        rotateLeft: null,  // No label, icon only
+        rotateRight: null
+    }
+});
+```
 
 ### Methods
 

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWP - Declarative/HTML Approach Examples</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SWP Library -->
+    <link rel="stylesheet" href="../dist/swp.css">
+    
+    <style>
+        .example-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .example-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .example-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">SWP Declarative Approach</h1>
+            <p class="text-gray-600">Configure photo editor using HTML data attributes - no JavaScript required!</p>
+        </div>
+
+        <!-- Example 1: Basic Declarative -->
+        <div class="example-section">
+            <div class="example-title">1. Basic Declarative Initialization</div>
+            <div class="example-desc">Simply add <code class="bg-gray-200 px-2 py-1 rounded">data-swp</code> attribute to auto-initialize</div>
+            <div class="code-block">&lt;div data-swp&gt;&lt;/div&gt;</div>
+            
+            <div data-swp></div>
+        </div>
+
+        <!-- Example 2: With Dimensions -->
+        <div class="example-section">
+            <div class="example-title">2. Custom Dimensions</div>
+            <div class="example-desc">Set width and height using data attributes</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-width="900" 
+     data-swp-height="500"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-width="900" 
+                 data-swp-height="500"></div>
+        </div>
+
+        <!-- Example 3: Icons Only -->
+        <div class="example-section">
+            <div class="example-title">3. Icons Only (Compact Mode)</div>
+            <div class="example-desc">Hide all labels for a compact toolbar</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-show-labels="false"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-show-labels="false"></div>
+        </div>
+
+        <!-- Example 4: Labels Only -->
+        <div class="example-section">
+            <div class="example-title">4. Labels Only (Text Mode)</div>
+            <div class="example-desc">Hide all icons for text-only buttons</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-show-icons="false"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-show-icons="false"></div>
+        </div>
+
+        <!-- Example 5: Custom Labels (Simple Format) -->
+        <div class="example-section">
+            <div class="example-title">5. Custom Labels - Simple Format</div>
+            <div class="example-desc">Customize button labels using key:value pairs separated by semicolons</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-labels="upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-labels="upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"></div>
+        </div>
+
+        <!-- Example 6: Custom Labels (JSON Format) -->
+        <div class="example-section">
+            <div class="example-title">6. Custom Labels - JSON Format</div>
+            <div class="example-desc">Use JSON format for more complex configurations</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-labels='{"upload":"Télécharger","resize":"Redimensionner","adjust":"Ajuster","filters":"Filtres","reset":"Réinitialiser","save":"Enregistrer"}'&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-labels='{"upload":"Télécharger","resize":"Redimensionner","adjust":"Ajuster","filters":"Filtres","reset":"Réinitialiser","save":"Enregistrer"}'></div>
+        </div>
+
+        <!-- Example 7: Hide Specific Labels -->
+        <div class="example-section">
+            <div class="example-title">7. Hide Specific Labels</div>
+            <div class="example-desc">Set labels to 'null' to hide only specific button labels</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-labels="rotateLeft: null; rotateRight: null; flipH: null; flipV: null"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-labels="rotateLeft: null; rotateRight: null; flipH: null; flipV: null"></div>
+        </div>
+
+        <!-- Example 8: Multilingual (Spanish) -->
+        <div class="example-section">
+            <div class="example-title">8. Multilingual - Spanish</div>
+            <div class="example-desc">Full Spanish translation</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-labels="upload: 'Subir'; resize: 'Redimensionar'; adjust: 'Ajustar'; filters: 'Filtros'; reset: 'Restablecer'; save: 'Guardar'"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-labels="upload: 'Subir'; resize: 'Redimensionar'; adjust: 'Ajustar'; filters: 'Filtros'; reset: 'Restablecer'; save: 'Guardar'"></div>
+        </div>
+
+        <!-- Example 9: Multilingual (Bahasa Indonesia) -->
+        <div class="example-section">
+            <div class="example-title">9. Multilingual - Bahasa Indonesia</div>
+            <div class="example-desc">Full Indonesian translation</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-labels="upload: 'Unggah'; resize: 'Ubah Ukuran'; adjust: 'Sesuaikan'; filters: 'Filter'; reset: 'Atur Ulang'; save: 'Simpan'"&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-labels="upload: 'Unggah'; resize: 'Ubah Ukuran'; adjust: 'Sesuaikan'; filters: 'Filter'; reset: 'Atur Ulang'; save: 'Simpan'"></div>
+        </div>
+
+        <!-- Example 10: Complete Configuration -->
+        <div class="example-section">
+            <div class="example-title">10. Complete Configuration</div>
+            <div class="example-desc">Combine multiple options together</div>
+            <div class="code-block">&lt;div data-swp 
+     data-swp-width="950"
+     data-swp-height="550"
+     data-swp-image-url="https://picsum.photos/800/600"
+     data-swp-labels='{"upload":"📤 Upload","resize":"📏 Resize","adjust":"🎨 Adjust","filters":"✨ Filters","reset":"🔄 Reset","save":"💾 Save"}'&gt;&lt;/div&gt;</div>
+            
+            <div data-swp 
+                 data-swp-width="950"
+                 data-swp-height="550"
+                 data-swp-image-url="https://picsum.photos/800/600"
+                 data-swp-labels='{"upload":"📤 Upload","resize":"📏 Resize","adjust":"🎨 Adjust","filters":"✨ Filters","reset":"🔄 Reset","save":"💾 Save"}'></div>
+        </div>
+
+        <!-- Data Attributes Reference -->
+        <div class="example-section bg-blue-50">
+            <div class="example-title">📚 Data Attributes Reference</div>
+            <div class="text-sm space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <strong class="text-blue-700">Basic Configuration:</strong>
+                        <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp</code> - Enable auto-initialization</li>
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-width</code> - Canvas width (number)</li>
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-height</code> - Canvas height (number)</li>
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-image-url</code> - Initial image URL</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong class="text-blue-700">UI Configuration:</strong>
+                        <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-show-icons</code> - Show/hide icons (true/false)</li>
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-show-labels</code> - Show/hide labels (true/false)</li>
+                            <li><code class="bg-blue-100 px-2 py-1 rounded">data-swp-labels</code> - Custom labels (see formats below)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-blue-200">
+                    <strong class="text-blue-700">Label Format Options:</strong>
+                    <div class="mt-2 space-y-2">
+                        <div class="bg-white p-3 rounded border border-blue-200">
+                            <strong>Simple Format:</strong>
+                            <code class="block mt-1 text-xs">data-swp-labels="upload: 'Text'; resize: 'Text'; save: 'Text'"</code>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-blue-200">
+                            <strong>JSON Format:</strong>
+                            <code class="block mt-1 text-xs">data-swp-labels='{"upload":"Text","resize":"Text","save":"Text"}'</code>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-blue-200">
+                            <strong>Available Label Keys:</strong>
+                            <code class="block mt-1 text-xs">upload, rotateLeft, rotateRight, flipH, flipV, resize, adjust, filters, reset, save</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12 text-gray-600 text-sm space-y-2">
+            <p>All examples above use zero JavaScript - just HTML data attributes! 🎉</p>
+            <p>
+                <a href="index.html" class="text-blue-600 hover:underline">Main Example</a> | 
+                <a href="customization.html" class="text-blue-600 hover:underline">Programmatic Examples</a>
+            </p>
+            <p class="text-gray-500">SenangWebs Photobooth v1.0.0</p>
+        </div>
+    </div>
+
+    <!-- SWP Library Script -->
+    <script src="../dist/swp.js"></script>
+    
+    <!-- Log initialization -->
+    <script>
+        console.log('✅ All SWP instances auto-initialized from data attributes!');
+        console.log('📝 View source to see the HTML-only configuration');
+    </script>
+</body>
+</html>
