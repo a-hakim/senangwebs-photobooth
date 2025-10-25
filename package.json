@@ -4,18 +4,10 @@
   "description": "A lightweight client-side photo editing library",
   "main": "dist/swp.min.js",
   "style": "dist/swp.min.css",
-  "files": [
-    "dist/swp.min.js",
-    "dist/swp.min.css",
-    "src/js/swp.js",
-    "src/css/swp.css"
-  ],
   "scripts": {
-    "dev": "webpack serve --mode development --open",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
-    "watch": "webpack --mode development --watch",
-    "clean": "rimraf dist",
-    "prebuild": "npm run clean"
+    "dev": "webpack --mode development --watch"
   },
   "keywords": [
     "photo-editor",
@@ -27,14 +19,14 @@
   "author": "SenangWebs",
   "license": "MIT",
   "devDependencies": {
-    "css-loader": "^6.8.1",
-    "css-minimizer-webpack-plugin": "^5.0.1",
-    "html-webpack-plugin": "^5.5.3",
-    "mini-css-extract-plugin": "^2.7.6",
-    "rimraf": "^5.0.5",
-    "style-loader": "^3.3.3",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.1"
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "babel-loader": "^9.0.0",
+    "css-loader": "^6.0.0",
+    "mini-css-extract-plugin": "^2.0.0",
+    "style-loader": "^3.0.0",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }

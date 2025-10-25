@@ -78,11 +78,17 @@ class SWP {
             filtersPanel.className = 'swp-filters-panel';
             filtersPanel.innerHTML = this.createFiltersPanelHTML();
 
+            // Create resize panel
+            const resizePanel = document.createElement('div');
+            resizePanel.className = 'swp-resize-panel';
+            resizePanel.innerHTML = this.createResizePanelHTML();
+
             // Append elements
             wrapper.appendChild(toolbar);
             wrapper.appendChild(canvasContainer);
             wrapper.appendChild(adjustmentsPanel);
             wrapper.appendChild(filtersPanel);
+            wrapper.appendChild(resizePanel);
             this.container.appendChild(wrapper);
 
             // Bind events
@@ -110,6 +116,12 @@ class SWP {
                     </button>
                     <button class="swp-btn" data-action="flip-v" title="Flip Vertical">
                         <span class="swp-icon">⇅</span>
+                    </button>
+                </div>
+                <div class="swp-toolbar-group">
+                    <button class="swp-btn" data-action="toggle-resize" title="Resize">
+                        <span class="swp-icon">📐</span>
+                        <span>Resize</span>
                     </button>
                 </div>
                 <div class="swp-toolbar-group">
@@ -152,6 +164,29 @@ class SWP {
                     <label>Saturation</label>
                     <input type="range" id="swp-saturation" min="0" max="200" value="100">
                     <span class="swp-value">100%</span>
+                </div>
+            `;
+        }
+
+        createResizePanelHTML() {
+            return `
+                <h3>Resize Image</h3>
+                <div class="swp-resize-controls">
+                    <div class="swp-adjustment">
+                        <label>Width (px)</label>
+                        <input type="number" id="swp-resize-width" min="1" max="5000" value="800">
+                    </div>
+                    <div class="swp-adjustment">
+                        <label>Height (px)</label>
+                        <input type="number" id="swp-resize-height" min="1" max="5000" value="600">
+                    </div>
+                    <div class="swp-adjustment">
+                        <label>
+                            <input type="checkbox" id="swp-maintain-ratio" checked>
+                            Maintain aspect ratio
+                        </label>
+                    </div>
+                    <button class="swp-btn swp-btn-primary" data-action="apply-resize">Apply Resize</button>
                 </div>
             `;
         }
@@ -230,6 +265,27 @@ class SWP {
                     });
                 }
             });
+
+            // Resize inputs with aspect ratio maintenance
+            const widthInput = this.container.querySelector('#swp-resize-width');
+            const heightInput = this.container.querySelector('#swp-resize-height');
+            const maintainRatio = this.container.querySelector('#swp-maintain-ratio');
+            
+            if (widthInput && heightInput && this.currentImage) {
+                let aspectRatio = this.currentImage.width / this.currentImage.height;
+                
+                widthInput.addEventListener('input', (e) => {
+                    if (maintainRatio.checked) {
+                        heightInput.value = Math.round(parseInt(e.target.value) / aspectRatio);
+                    }
+                });
+                
+                heightInput.addEventListener('input', (e) => {
+                    if (maintainRatio.checked) {
+                        widthInput.value = Math.round(parseInt(e.target.value) * aspectRatio);
+                    }
+                });
+            }
         }
 
         handleAction(action) {
@@ -255,6 +311,12 @@ class SWP {
                 case 'toggle-filters':
                     this.togglePanel('.swp-filters-panel');
                     break;
+                case 'toggle-resize':
+                    this.togglePanel('.swp-resize-panel');
+                    break;
+                case 'apply-resize':
+                    this.applyResize();
+                    break;
                 case 'reset':
                     this.reset();
                     break;
@@ -269,11 +331,13 @@ class SWP {
             if (panel) {
                 panel.classList.toggle('active');
                 
-                // Close other panel
-                const otherPanel = selector === '.swp-adjustments-panel' 
-                    ? '.swp-filters-panel' 
-                    : '.swp-adjustments-panel';
-                this.container.querySelector(otherPanel).classList.remove('active');
+                // Close other panels
+                const panels = ['.swp-adjustments-panel', '.swp-filters-panel', '.swp-resize-panel'];
+                panels.forEach(p => {
+                    if (p !== selector) {
+                        this.container.querySelector(p)?.classList.remove('active');
+                    }
+                });
             }
         }
 
@@ -284,6 +348,17 @@ class SWP {
             img.onload = () => {
                 this.originalImage = img;
                 this.currentImage = img;
+                
+                // Set canvas to exact image dimensions
+                this.canvas.width = img.width;
+                this.canvas.height = img.height;
+                
+                // Update resize inputs
+                const widthInput = this.container.querySelector('#swp-resize-width');
+                const heightInput = this.container.querySelector('#swp-resize-height');
+                if (widthInput) widthInput.value = img.width;
+                if (heightInput) heightInput.value = img.height;
+                
                 this.drawImage();
                 this.emit('load');
             };
@@ -304,24 +379,6 @@ class SWP {
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Calculate dimensions to fit image in canvas
-            const imgRatio = this.currentImage.width / this.currentImage.height;
-            const canvasRatio = canvas.width / canvas.height;
-            
-            let drawWidth, drawHeight, offsetX, offsetY;
-
-            if (imgRatio > canvasRatio) {
-                drawWidth = canvas.width;
-                drawHeight = canvas.width / imgRatio;
-                offsetX = 0;
-                offsetY = (canvas.height - drawHeight) / 2;
-            } else {
-                drawHeight = canvas.height;
-                drawWidth = canvas.height * imgRatio;
-                offsetX = (canvas.width - drawWidth) / 2;
-                offsetY = 0;
-            }
-
             // Apply transformations
             ctx.save();
             
@@ -340,13 +397,13 @@ class SWP {
             // Apply CSS filters
             ctx.filter = this.getFilterString();
 
-            // Draw image centered
+            // Draw image at actual size (canvas matches image dimensions)
             ctx.drawImage(
                 this.currentImage,
-                -drawWidth / 2,
-                -drawHeight / 2,
-                drawWidth,
-                drawHeight
+                -canvas.width / 2,
+                -canvas.height / 2,
+                canvas.width,
+                canvas.height
             );
 
             ctx.restore();
@@ -416,6 +473,47 @@ class SWP {
 
             this.currentState.filter = filterName;
             this.drawImage();
+        }
+
+        applyResize() {
+            if (!this.currentImage) return;
+
+            const widthInput = this.container.querySelector('#swp-resize-width');
+            const heightInput = this.container.querySelector('#swp-resize-height');
+            
+            const newWidth = parseInt(widthInput.value);
+            const newHeight = parseInt(heightInput.value);
+
+            if (!newWidth || !newHeight || newWidth < 1 || newHeight < 1) {
+                alert('Please enter valid dimensions');
+                return;
+            }
+
+            // Create temporary canvas for resizing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = newWidth;
+            tempCanvas.height = newHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Apply current filters while resizing
+            tempCtx.filter = this.getFilterString();
+
+            // Draw resized image
+            tempCtx.drawImage(this.currentImage, 0, 0, newWidth, newHeight);
+
+            // Load resized image
+            const resizedImage = new Image();
+            resizedImage.onload = () => {
+                this.currentImage = resizedImage;
+                this.originalImage = resizedImage;
+                
+                // Update canvas size
+                this.canvas.width = newWidth;
+                this.canvas.height = newHeight;
+                
+                this.drawImage();
+            };
+            resizedImage.src = tempCanvas.toDataURL();
         }
 
         crop(x, y, width, height) {

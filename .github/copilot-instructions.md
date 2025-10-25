@@ -52,6 +52,7 @@ npm run watch    # Auto-rebuild without dev server
   - Dev: `swp.js` + `swp.css`
   - Prod: `swp.min.js` + `swp.min.css`
 - **UMD library config:** Exports as `SWP` global + default ES6 export
+- **NO HtmlWebpackPlugin** - Demo pages reference dist/ files via script tags
 
 ### File Structure
 ```
@@ -59,8 +60,14 @@ src/
 ├── js/swp.js      # Single 530-line class - ALL library logic
 ├── css/swp.css    # Complete styling (~6KB)
 dist/              # Generated build artifacts
-spec.md            # Original specification - source of truth for features
+├── swp.min.js     # Production library bundle
+└── swp.min.css    # Production styles
+examples/
+└── index.html     # Standalone example (also uses dist/ files)
+spec.md            # Original specification - source of truth
 ```
+
+**Important:** Demo pages (`examples/index.html`) are NOT bundled by webpack. They reference built dist/ files directly via `<script>` tags. Always run `npm run build` first before testing demos.
 
 ## Code Conventions & Patterns
 
@@ -203,4 +210,4 @@ swpInstance.applyFilter('grayscale');
 - `spec.md` - Original feature specification (source of truth)
 - `README.md` - API documentation and usage examples
 - `BUILD.md` - Detailed build system documentation
-- `examples/standalone.html` - No-build usage example
+- `examples/index.html` - Standalone usage example (uses built dist/ files)
