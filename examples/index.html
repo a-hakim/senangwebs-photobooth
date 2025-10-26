@@ -1,39 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SenangWebs Photobooth - Professional Photo Editor</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- SWP Library -->
-    <link rel="stylesheet" href="../dist/swp.css">
-</head>
-<body class="min-h-screen">
+    <link rel="stylesheet" href="../dist/swp.css" />
+  </head>
+  <body class="min-h-screen">
+    <main class="container flex flex-col gap-8 items-center justify-center mx-auto">
+      <h2 class="text-3xl lg:text-6xl capitalize font-bold">
+        Declarative Approach
+      </h2>
 
-    <div data-swp data-swp-labels="upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'">
-      <div data-swp-tools></div>
-      <div data-swp-canvas></div>
-    </div>
+      <div
+        data-swp
+        data-swp-labels="upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"
+      >
+        <div data-swp-tools></div>
+        <div data-swp-canvas></div>
+      </div>
 
-    <div id="photobooth"></div>
+      <h2 class="text-3xl lg:text-6xl capitalize font-bold">
+        Programmatic Approach
+      </h2>
+
+      <div id="photobooth"></div>
+    </main>
 
     <!-- SWP Library Script -->
     <script src="../dist/swp.js"></script>
-    
+
     <!-- Application Script -->
     <script>
-        // Console output helper
-        const consoleOutput = document.getElementById('console-output');
-        const statusElement = document.getElementById('status');
-        
-        // Initialize SWP
-        const swpInstance = new SWP(document.getElementById('photobooth'), {
-            width: 900,
-            height: 600
-        });
+      // Console output helper
+      const consoleOutput = document.getElementById("console-output");
+      const statusElement = document.getElementById("status");
+
+      // Initialize SWP
+      const swpInstance = new SWP(document.getElementById("photobooth"), {
+        width: 900,
+        height: 600,
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -2,25 +2,28 @@
 
 A lightweight and easy-to-use JavaScript library for client-side photo editing. No dependencies, no server-side processing - everything happens in your browser!
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Development
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
-
 2. **Start development server:**
+
    ```bash
    npm run dev
    ```
-   This will start a dev server at `http://localhost:3000` with hot reloading.
 
+   This will start a dev server at `http://localhost:3000` with hot reloading.
 3. **Build for production:**
+
    ```bash
    npm run build
    ```
+
    This creates optimized files in the `dist/` directory.
 
 ### Using the Library
@@ -39,16 +42,16 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
 <script src="src/js/swp.js"></script>
 ```
 
-## 📦 Features
+## Features
 
-- ✂️ **Cropping** - Select and crop image areas with predefined aspect ratios
-- 🔄 **Rotating** - Rotate images in 90-degree increments
-- ↔️ **Flipping** - Flip images horizontally and vertically
-- 🎨 **Adjustments** - Fine-tune brightness, contrast, and saturation
-- ✨ **Filters** - Apply pre-defined filters (Grayscale, Sepia, Invert, Blur)
-- 💾 **Export** - Save edited images in JPEG or PNG format
+- Cropping** - Select and crop image areas with predefined aspect ratios
+- Rotating** - Rotate images in 90-degree increments
+- Flipping** - Flip images horizontally and vertically
+- Adjustments** - Fine-tune brightness, contrast, and saturation
+- Filters** - Apply pre-defined filters (Grayscale, Sepia, Invert, Blur)
+- **Export** - Save edited images in JPEG or PNG format
 
-## 💻 Usage
+## Usage
 
 ### Programmatic Approach
 
@@ -94,6 +97,7 @@ Use HTML data attributes for zero-JavaScript configuration:
 ```
 
 **Available Data Attributes:**
+
 - `data-swp` - Enable auto-initialization
 - `data-swp-width` - Canvas width (number)
 - `data-swp-height` - Canvas height (number)
@@ -113,6 +117,7 @@ const swp = new SWP(container, options);
 ```
 
 **Options:**
+
 - `imageUrl` (String) - URL of the image to load
 - `width` (Number) - Width of the editor in pixels (default: 800)
 - `height` (Number) - Height of the editor in pixels (default: 600)
@@ -159,6 +164,7 @@ const swp = new SWP(container, {
 ### Methods
 
 #### `loadImage(imageUrl)`
+
 Load a new image into the editor.
 
 ```javascript
@@ -166,6 +172,7 @@ swp.loadImage('path/to/image.jpg');
 ```
 
 #### `rotate(degrees)`
+
 Rotate the image by specified degrees.
 
 ```javascript
@@ -174,6 +181,7 @@ swp.rotate(-90); // Rotate 90 degrees counter-clockwise
 ```
 
 #### `flip(direction)`
+
 Flip the image horizontally or vertically.
 
 ```javascript
@@ -182,6 +190,7 @@ swp.flip('vertical');
 ```
 
 #### `setAdjustment(adjustment, value)`
+
 Apply adjustments to the image.
 
 ```javascript
@@ -191,6 +200,7 @@ swp.setAdjustment('saturation', 80);  // Range: 0-200
 ```
 
 #### `applyFilter(filterName)`
+
 Apply a pre-defined filter.
 
 ```javascript
@@ -202,6 +212,7 @@ swp.applyFilter('none'); // Remove filter
 ```
 
 #### `crop(x, y, width, height)`
+
 Crop the image to specified dimensions.
 
 ```javascript
@@ -209,6 +220,7 @@ swp.crop(100, 100, 400, 300);
 ```
 
 #### `reset()`
+
 Reset all edits and revert to original image.
 
 ```javascript
@@ -216,6 +228,7 @@ swp.reset();
 ```
 
 #### `getImageData(format, quality)`
+
 Export the edited image data.
 
 ```javascript
@@ -241,6 +254,11 @@ swp.on('save', () => {
 });
 ```
 
+## NPM Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+
 ## Browser Compatibility
 
 SWP works on all modern browsers that support HTML5 Canvas API and CSS filters:
@@ -250,57 +268,17 @@ SWP works on all modern browsers that support HTML5 Canvas API and CSS filters:
 - ✅ Edge (latest 2 versions)
 - ✅ Safari (latest 2 versions)
 
-## 📁 Project Structure
-
-```
-senangwebs-photobooth/
-├── src/
-│   ├── css/
-│   │   └── swp.css           # Source styles
-│   ├── js/
-│   │   └── swp.js            # Source library
-│   └── index.html            # Demo page
-├── dist/                     # Built files
-│   ├── swp.min.js           # Minified library (~10KB)
-│   ├── swp.min.css          # Minified styles (~4KB)
-│   └── index.html           # Demo
-├── webpack.config.js         # Build config
-├── package.json              # Dependencies
-└── README.md                 # Documentation
-```
-
-## 🔧 NPM Scripts
-
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
-- `npm run watch` - Watch mode for development
-- `npm run clean` - Clean dist directory
-
-## 🌐 Browser Compatibility
-
-SWP works on all modern browsers that support HTML5 Canvas API and CSS filters:
-
-- ✅ Chrome (latest 2 versions)
-- ✅ Firefox (latest 2 versions)
-- ✅ Edge (latest 2 versions)
-- ✅ Safari (latest 2 versions)
-
-## 📝 License
+## License
 
 MIT License - Feel free to use in your projects!
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 🎯 Future Enhancements
+## Future Enhancements
 
 - More filters and adjustments
 - Text and sticker overlays
-- Undo/Redo functionality
 - Touch gesture support
 - Framework integrations (React, Vue, Angular)
-
----
-
-Built with ❤️ by SenangWebs
