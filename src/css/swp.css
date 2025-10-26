@@ -21,24 +21,23 @@
 /* Toolbar */
 .swp-toolbar {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     padding: 15px;
     background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
     flex-wrap: wrap;
 }
 
 .swp-toolbar-group {
     display: flex;
-    gap: 5px;
+    gap: 4px;
     align-items: center;
 }
 
 .swp-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 8px 16px;
+    gap: 8px;
+    padding: 0px 12px;
     border: 1px solid #dee2e6;
     background: #ffffff;
     border-radius: 6px;
@@ -47,6 +46,7 @@
     color: #495057;
     transition: all 0.2s ease;
     font-family: inherit;
+    height: 40px;
 }
 
 .swp-btn:hover {
@@ -70,8 +70,11 @@
 }
 
 .swp-btn-icon-only {
-    padding: 8px 12px;
+    padding: 0px 12px;
     justify-content: center;
+    align-items: center;
+    aspect-ratio: 1 / 1;
+    max-width: 40px;
 }
 
 .swp-icon {
@@ -81,7 +84,6 @@
 /* Canvas Container */
 .swp-canvas-container {
     position: relative;
-    background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -92,8 +94,6 @@
 .swp-canvas {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     background: white;
 }
 

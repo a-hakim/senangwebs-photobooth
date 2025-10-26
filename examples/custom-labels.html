@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Labels Example - SenangWebs Photobooth</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- SWP Library -->
+    <link rel="stylesheet" href="../dist/swp.css" />
+  </head>
+  <body class="min-h-screen bg-gray-100 p-8">
+    <main class="container mx-auto">
+      <h1 class="text-4xl font-bold text-center mb-8">Custom Labels Examples</h1>
+
+      <!-- Example 1: Default (icon-only rotate/flip buttons) -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">1. Default (Icon-Only Rotate/Flip)</h2>
+        <p class="mb-4 text-gray-600">By default, rotate and flip buttons show only icons.</p>
+        <div class="border bg-white p-4 rounded-lg">
+          <div id="photobooth-1"></div>
+        </div>
+      </section>
+
+      <!-- Example 2: With Labels for Rotate and Flip -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">2. With Labels for Rotate and Flip</h2>
+        <p class="mb-4 text-gray-600">Add custom labels to rotate and flip buttons.</p>
+        <div class="border bg-white p-4 rounded-lg">
+          <div id="photobooth-2"></div>
+        </div>
+      </section>
+
+      <!-- Example 3: Declarative with Custom Labels -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">3. Declarative Approach with Custom Labels</h2>
+        <p class="mb-4 text-gray-600">Using data attributes to set custom labels.</p>
+        <div class="border bg-white p-4 rounded-lg">
+          <div
+            data-swp
+            data-swp-labels="upload: 'Upload'; rotateLeft: 'Rotate Left'; rotateRight: 'Rotate Right'; flipH: 'Flip H'; flipV: 'Flip V'; resize: 'Resize'; adjust: 'Adjust'; filters: 'Filters'; reset: 'Reset'; save: 'Save'"
+          ></div>
+        </div>
+      </section>
+
+      <!-- Example 4: Internationalization (Malay) -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">4. Internationalization (Bahasa Melayu)</h2>
+        <p class="mb-4 text-gray-600">All buttons with Malay labels.</p>
+        <div class="border bg-white p-4 rounded-lg">
+          <div
+            data-swp
+            data-swp-labels="upload: 'Muat Naik'; rotateLeft: 'Pusing Kiri'; rotateRight: 'Pusing Kanan'; flipH: 'Balik Melintang'; flipV: 'Balik Menegak'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"
+          ></div>
+        </div>
+      </section>
+
+      <!-- Example 5: Mixed (Some with labels, some without) -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">5. Mixed Labels</h2>
+        <p class="mb-4 text-gray-600">Main actions have labels, rotate/flip remain icon-only.</p>
+        <div class="border bg-white p-4 rounded-lg">
+          <div id="photobooth-5"></div>
+        </div>
+      </section>
+
+      <!-- Code Examples -->
+      <section class="mt-12 bg-gray-50 p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4">Code Examples</h2>
+        
+        <div class="mb-6">
+          <h3 class="text-xl font-semibold mb-2">Programmatic Approach:</h3>
+          <pre class="bg-gray-800 text-green-400 p-4 rounded overflow-x-auto"><code>// Default (icon-only)
+new SWP(container, {
+  // rotateLeft, rotateRight, flipH, flipV are null by default
+});
+
+// With labels
+new SWP(container, {
+  labels: {
+    rotateLeft: 'Rotate Left',
+    rotateRight: 'Rotate Right',
+    flipH: 'Flip Horizontal',
+    flipV: 'Flip Vertical'
+  }
+});</code></pre>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold mb-2">Declarative Approach:</h3>
+          <pre class="bg-gray-800 text-green-400 p-4 rounded overflow-x-auto"><code>&lt;div
+  data-swp
+  data-swp-labels="rotateLeft: 'Rotate Left'; rotateRight: 'Rotate Right'; flipH: 'Flip H'; flipV: 'Flip V'"
+&gt;&lt;/div&gt;</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <!-- SWP Library Script -->
+    <script src="../dist/swp.js"></script>
+
+    <!-- Application Script -->
+    <script>
+      // Example 1: Default (icon-only)
+      new SWP(document.getElementById("photobooth-1"), {
+        width: 800,
+        height: 600
+      });
+
+      // Example 2: With labels for rotate and flip
+      new SWP(document.getElementById("photobooth-2"), {
+        width: 800,
+        height: 600,
+        labels: {
+          rotateLeft: 'Rotate Left',
+          rotateRight: 'Rotate Right',
+          flipH: 'Flip Horizontal',
+          flipV: 'Flip Vertical'
+        }
+      });
+
+      // Example 5: Mixed (main actions with labels, rotate/flip without)
+      new SWP(document.getElementById("photobooth-5"), {
+        width: 800,
+        height: 600,
+        labels: {
+          upload: 'Upload Image',
+          resize: 'Resize',
+          adjust: 'Adjustments',
+          filters: 'Filters',
+          reset: 'Reset All',
+          save: 'Download'
+          // rotateLeft, rotateRight, flipH, flipV remain null (icon-only)
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -265,26 +265,59 @@ class SWP {
                 }
             });
 
-            // Resize inputs with aspect ratio maintenance
+        }
+
+        bindResizeInputs() {
             const widthInput = this.container.querySelector('#swp-resize-width');
             const heightInput = this.container.querySelector('#swp-resize-height');
             const maintainRatio = this.container.querySelector('#swp-maintain-ratio');
             
-            if (widthInput && heightInput && this.currentImage) {
-                let aspectRatio = this.currentImage.width / this.currentImage.height;
+            if (!widthInput || !heightInput || !this.currentImage) return;
+
+            // Remove old event listeners by cloning and replacing
+            const newWidthInput = widthInput.cloneNode(true);
+            const newHeightInput = heightInput.cloneNode(true);
+            widthInput.parentNode.replaceChild(newWidthInput, widthInput);
+            heightInput.parentNode.replaceChild(newHeightInput, heightInput);
+
+            const aspectRatio = this.currentImage.width / this.currentImage.height;
+            
+            // Real-time width adjustment with aspect ratio
+            newWidthInput.addEventListener('input', (e) => {
+                const newWidth = parseInt(e.target.value);
                 
-                widthInput.addEventListener('input', (e) => {
-                    if (maintainRatio.checked) {
-                        heightInput.value = Math.round(parseInt(e.target.value) / aspectRatio);
-                    }
-                });
+                if (maintainRatio.checked) {
+                    const newHeight = Math.round(newWidth / aspectRatio);
+                    newHeightInput.value = newHeight;
+                }
                 
-                heightInput.addEventListener('input', (e) => {
-                    if (maintainRatio.checked) {
-                        widthInput.value = Math.round(parseInt(e.target.value) * aspectRatio);
-                    }
-                });
-            }
+                // Real-time preview
+                this.updateCanvasSize(parseInt(newWidthInput.value), parseInt(newHeightInput.value));
+            });
+            
+            // Real-time height adjustment with aspect ratio
+            newHeightInput.addEventListener('input', (e) => {
+                const newHeight = parseInt(e.target.value);
+                
+                if (maintainRatio.checked) {
+                    const newWidth = Math.round(newHeight * aspectRatio);
+                    newWidthInput.value = newWidth;
+                }
+                
+                // Real-time preview
+                this.updateCanvasSize(parseInt(newWidthInput.value), parseInt(newHeightInput.value));
+            });
+        }
+
+        updateCanvasSize(width, height) {
+            if (!this.currentImage || !width || !height || width < 1 || height < 1) return;
+
+            // Update canvas dimensions
+            this.canvas.width = width;
+            this.canvas.height = height;
+            
+            // Redraw image at new size
+            this.drawImage();
         }
 
         handleAction(action) {
@@ -357,6 +390,9 @@ class SWP {
                 const heightInput = this.container.querySelector('#swp-resize-height');
                 if (widthInput) widthInput.value = img.width;
                 if (heightInput) heightInput.value = img.height;
+                
+                // Bind resize inputs with aspect ratio
+                this.bindResizeInputs();
                 
                 this.drawImage();
                 this.emit('load');
@@ -488,27 +524,26 @@ class SWP {
                 return;
             }
 
-            // Create temporary canvas for resizing
+            // Canvas size is already updated by real-time preview
+            // Now we need to make the resize permanent by updating the currentImage
+            
+            // Create temporary canvas with current canvas content
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = newWidth;
-            tempCanvas.height = newHeight;
+            tempCanvas.width = this.canvas.width;
+            tempCanvas.height = this.canvas.height;
             const tempCtx = tempCanvas.getContext('2d');
 
-            // Apply current filters while resizing
-            tempCtx.filter = this.getFilterString();
+            // Copy current canvas content
+            tempCtx.drawImage(this.canvas, 0, 0);
 
-            // Draw resized image
-            tempCtx.drawImage(this.currentImage, 0, 0, newWidth, newHeight);
-
-            // Load resized image
+            // Load as new current image
             const resizedImage = new Image();
             resizedImage.onload = () => {
                 this.currentImage = resizedImage;
                 this.originalImage = resizedImage;
                 
-                // Update canvas size
-                this.canvas.width = newWidth;
-                this.canvas.height = newHeight;
+                // Rebind resize inputs with new aspect ratio
+                this.bindResizeInputs();
                 
                 this.drawImage();
             };

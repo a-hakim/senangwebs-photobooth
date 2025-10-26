@@ -159,7 +159,19 @@ const swp = new SWP(container, {
         rotateRight: null
     }
 });
+
+// Show labels for rotate and flip buttons
+const swp = new SWP(container, {
+    labels: {
+        rotateLeft: 'Rotate Left',
+        rotateRight: 'Rotate Right',
+        flipH: 'Flip Horizontal',
+        flipV: 'Flip Vertical'
+    }
+});
 ```
+
+**Note:** By default, `rotateLeft`, `rotateRight`, `flipH`, and `flipV` have `null` labels (icon-only display) to keep the toolbar compact. You can add custom labels to these buttons as shown above.
 
 ### Methods
 
