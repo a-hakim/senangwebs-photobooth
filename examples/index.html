@@ -11,25 +11,28 @@
     <!-- SWP Library -->
     <link rel="stylesheet" href="../dist/swp.css" />
   </head>
-  <body class="min-h-screen">
-    <main class="container flex flex-col gap-8 items-center justify-center mx-auto">
-      <h2 class="text-3xl lg:text-6xl capitalize font-bold">
+  <body class="min-h-screen p-8 bg-gray-100">
+    <main
+      class="container flex flex-col gap-8 items-center justify-center mx-auto"
+    >
+      <h2 class="text-2xl lg:text-4xl capitalize font-bold">
         Declarative Approach
       </h2>
 
       <div
         data-swp
-        data-swp-labels="rotateLeft: 'Rotate Left'; rotateRight: 'Rotate Right'; flipH: 'Flip H'; flipV: 'Flip V'; upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'" class="border"
+        data-swp-labels="rotateLeft: 'Rotate Left'; rotateRight: 'Rotate Right'; flipH: 'Flip H'; flipV: 'Flip V'; upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"
+        class="border container h-[800px]"
       >
         <div data-swp-tools></div>
         <div data-swp-canvas></div>
       </div>
 
-      <h2 class="text-3xl lg:text-6xl capitalize font-bold">
+      <h2 class="text-2xl lg:text-4xl capitalize font-bold">
         Programmatic Approach
       </h2>
 
-      <div id="photobooth" class="border"></div>
+      <div id="photobooth" class="border container h-[600px]"></div>
     </main>
 
     <!-- SWP Library Script -->
@@ -44,7 +47,7 @@
       // Initialize SWP
       const swpInstance = new SWP(document.getElementById("photobooth"), {
         width: 900,
-        height: 600,
+        height: 400,
       });
     </script>
   </body>

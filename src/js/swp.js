@@ -69,6 +69,14 @@ class SWP {
             toolbar.className = 'swp-toolbar';
             toolbar.innerHTML = this.createToolbarHTML();
 
+            // Create layout container
+            const layoutContainer = document.createElement('div');
+            layoutContainer.className = 'swp-layout-container';
+
+            // Create control container
+            const controlContainer = document.createElement('div');
+            controlContainer.className = 'swp-control-container';
+
             // Create canvas container
             const canvasContainer = document.createElement('div');
             canvasContainer.className = 'swp-canvas-container';
@@ -99,10 +107,14 @@ class SWP {
 
             // Append elements
             wrapper.appendChild(toolbar);
-            wrapper.appendChild(canvasContainer);
-            wrapper.appendChild(adjustmentsPanel);
-            wrapper.appendChild(filtersPanel);
-            wrapper.appendChild(resizePanel);
+            wrapper.appendChild(layoutContainer);
+
+            layoutContainer.appendChild(canvasContainer);
+            layoutContainer.appendChild(controlContainer);
+
+            controlContainer.appendChild(adjustmentsPanel);
+            controlContainer.appendChild(filtersPanel);
+            controlContainer.appendChild(resizePanel);
             this.container.appendChild(wrapper);
 
             // Bind events
@@ -120,26 +132,29 @@ class SWP {
             
             return `
                 <div class="swp-toolbar-group">
-                    ${createButton('upload', 'fas fa-upload', labels.upload, 'Upload Image')}
+                    ${createButton('upload', 'fas fa-folder', labels.upload, 'Upload Image')}
                     <input type="file" id="swp-file-input" accept="image/*" style="display: none;">
                 </div>
-                <div class="swp-toolbar-group">
+                
+                <div class="swp-toolbar-group" style="margin: 0px auto;">
                     ${createButton('rotate-left', 'fas fa-undo', labels.rotateLeft, 'Rotate Left')}
                     ${createButton('rotate-right', 'fas fa-redo', labels.rotateRight, 'Rotate Right')}
                     ${createButton('flip-h', 'fas fa-arrows-alt-h', labels.flipH, 'Flip Horizontal')}
                     ${createButton('flip-v', 'fas fa-arrows-alt-v', labels.flipV, 'Flip Vertical')}
                 </div>
+
+                <div class="swp-toolbar-group">
+                    ${createButton('reset', 'fas fa-history', labels.reset, 'Reset')}
+                </div>
+
                 <div class="swp-toolbar-group">
                     ${createButton('toggle-resize', 'fas fa-expand-arrows-alt', labels.resize, 'Resize')}
-                </div>
-                <div class="swp-toolbar-group">
                     ${createButton('toggle-adjustments', 'fas fa-sliders-h', labels.adjust, 'Adjustments')}
                     ${createButton('toggle-filters', 'fas fa-magic', labels.filters, 'Filters')}
                 </div>
                 <div class="swp-toolbar-group">
-                    ${createButton('reset', 'fas fa-history', labels.reset, 'Reset')}
                     <button class="swp-btn swp-btn-primary${!showLabels || labels.save === null ? ' swp-btn-icon-only' : ''}" data-action="download" title="Download">
-                        ${showIcons ? '<span class="swp-icon"><i class="fas fa-download"></i></span>' : ''}
+                        ${showIcons ? '<span class="swp-icon"><i class="fas fa-save"></i></span>' : ''}
                         ${showLabels && labels.save !== null ? `<span>${labels.save}</span>` : ''}
                     </button>
                 </div>
