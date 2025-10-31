@@ -1,6 +1,7 @@
 # SenangWebs Photobooth (SWP)
 
 A lightweight and easy-to-use JavaScript library for client-side photo editing. No dependencies, no server-side processing - everything happens in your browser!
+![SenangWebs Photobooth Preview](https://raw.githubusercontent.com/a-hakim/senangwebs-photobooth/master/swp_preview.png)
 
 ## Quick Start
 
