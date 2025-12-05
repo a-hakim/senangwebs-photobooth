@@ -13,6 +13,7 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
    ```bash
    npm install
    ```
+
 2. **Start development server:**
 
    ```bash
@@ -20,6 +21,7 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
    ```
 
    This will start a dev server at `http://localhost:3000` with hot reloading.
+
 3. **Build for production:**
 
    ```bash
@@ -33,24 +35,24 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
 #### Include the built files:
 
 ```html
-<link rel="stylesheet" href="dist/swp.min.css">
+<link rel="stylesheet" href="dist/swp.min.css" />
 <script src="dist/swp.min.js"></script>
 ```
 
 #### Or use source files directly:
 
 ```html
-<link rel="stylesheet" href="src/css/swp.css">
+<link rel="stylesheet" href="src/css/swp.css" />
 <script src="src/js/swp.js"></script>
 ```
 
 ## Features
 
-- Cropping** - Select and crop image areas with predefined aspect ratios
-- Rotating** - Rotate images in 90-degree increments
-- Flipping** - Flip images horizontally and vertically
-- Adjustments** - Fine-tune brightness, contrast, and saturation
-- Filters** - Apply pre-defined filters (Grayscale, Sepia, Invert, Blur)
+- Cropping\*\* - Select and crop image areas with predefined aspect ratios
+- Rotating\*\* - Rotate images in 90-degree increments
+- Flipping\*\* - Flip images horizontally and vertically
+- Adjustments\*\* - Fine-tune brightness, contrast, and saturation
+- Filters\*\* - Apply pre-defined filters (Grayscale, Sepia, Invert, Blur)
 - **Export** - Save edited images in JPEG or PNG format
 
 ## Usage
@@ -61,17 +63,17 @@ A lightweight and easy-to-use JavaScript library for client-side photo editing. 
 <div id="photobooth-container"></div>
 
 <script>
-    const container = document.getElementById('photobooth-container');
-    const swp = new SWP(container, {
-        imageUrl: 'path/to/your/image.jpg',
-        width: 800,
-        height: 600
-    });
+  const container = document.getElementById("photobooth-container");
+  const swp = new SWP(container, {
+    imageUrl: "path/to/your/image.jpg",
+    width: 800,
+    height: 600,
+  });
 
-    // Listen to events
-    swp.on('load', () => console.log('Image loaded'));
-    swp.on('change', () => console.log('Image changed'));
-    swp.on('save', () => console.log('Image saved'));
+  // Listen to events
+  swp.on("load", () => console.log("Image loaded"));
+  swp.on("change", () => console.log("Image changed"));
+  swp.on("save", () => console.log("Image saved"));
 </script>
 ```
 
@@ -84,18 +86,24 @@ Use HTML data attributes for zero-JavaScript configuration:
 <div data-swp></div>
 
 <!-- With configuration -->
-<div data-swp
-     data-swp-width="900"
-     data-swp-height="600"
-     data-swp-show-labels="false"></div>
+<div
+  data-swp
+  data-swp-width="900"
+  data-swp-height="600"
+  data-swp-show-labels="false"
+></div>
 
 <!-- With custom labels (simple format) -->
-<div data-swp
-     data-swp-labels="upload: 'Muat Naik'; save: 'Simpan'; reset: 'Set Semula'"></div>
+<div
+  data-swp
+  data-swp-labels="upload: 'Muat Naik'; save: 'Simpan'; reset: 'Set Semula'"
+></div>
 
 <!-- With custom labels (JSON format) -->
-<div data-swp
-     data-swp-labels='{"upload":"Télécharger","save":"Enregistrer"}'></div>
+<div
+  data-swp
+  data-swp-labels='{"upload":"Télécharger","save":"Enregistrer"}'
+></div>
 ```
 
 **Available Data Attributes:**
@@ -142,34 +150,34 @@ const swp = new SWP(container, options);
 ```javascript
 // Icons only (compact view)
 const swp = new SWP(container, {
-    showLabels: false
+  showLabels: false,
 });
 
 // Custom labels (multilingual support)
 const swp = new SWP(container, {
-    labels: {
-        upload: 'Télécharger',
-        save: 'Enregistrer',
-        reset: 'Réinitialiser'
-    }
+  labels: {
+    upload: "Télécharger",
+    save: "Enregistrer",
+    reset: "Réinitialiser",
+  },
 });
 
 // Hide specific labels (set to null)
 const swp = new SWP(container, {
-    labels: {
-        rotateLeft: null,  // No label, icon only
-        rotateRight: null
-    }
+  labels: {
+    rotateLeft: null, // No label, icon only
+    rotateRight: null,
+  },
 });
 
 // Show labels for rotate and flip buttons
 const swp = new SWP(container, {
-    labels: {
-        rotateLeft: 'Rotate Left',
-        rotateRight: 'Rotate Right',
-        flipH: 'Flip Horizontal',
-        flipV: 'Flip Vertical'
-    }
+  labels: {
+    rotateLeft: "Rotate Left",
+    rotateRight: "Rotate Right",
+    flipH: "Flip Horizontal",
+    flipV: "Flip Vertical",
+  },
 });
 ```
 
@@ -182,7 +190,7 @@ const swp = new SWP(container, {
 Load a new image into the editor.
 
 ```javascript
-swp.loadImage('path/to/image.jpg');
+swp.loadImage("path/to/image.jpg");
 ```
 
 #### `rotate(degrees)`
@@ -190,7 +198,7 @@ swp.loadImage('path/to/image.jpg');
 Rotate the image by specified degrees.
 
 ```javascript
-swp.rotate(90);  // Rotate 90 degrees clockwise
+swp.rotate(90); // Rotate 90 degrees clockwise
 swp.rotate(-90); // Rotate 90 degrees counter-clockwise
 ```
 
@@ -199,8 +207,8 @@ swp.rotate(-90); // Rotate 90 degrees counter-clockwise
 Flip the image horizontally or vertically.
 
 ```javascript
-swp.flip('horizontal');
-swp.flip('vertical');
+swp.flip("horizontal");
+swp.flip("vertical");
 ```
 
 #### `setAdjustment(adjustment, value)`
@@ -208,9 +216,9 @@ swp.flip('vertical');
 Apply adjustments to the image.
 
 ```javascript
-swp.setAdjustment('brightness', 150); // Range: 0-200
-swp.setAdjustment('contrast', 120);   // Range: 0-200
-swp.setAdjustment('saturation', 80);  // Range: 0-200
+swp.setAdjustment("brightness", 150); // Range: 0-200
+swp.setAdjustment("contrast", 120); // Range: 0-200
+swp.setAdjustment("saturation", 80); // Range: 0-200
 ```
 
 #### `applyFilter(filterName)`
@@ -218,11 +226,11 @@ swp.setAdjustment('saturation', 80);  // Range: 0-200
 Apply a pre-defined filter.
 
 ```javascript
-swp.applyFilter('grayscale');
-swp.applyFilter('sepia');
-swp.applyFilter('invert');
-swp.applyFilter('blur');
-swp.applyFilter('none'); // Remove filter
+swp.applyFilter("grayscale");
+swp.applyFilter("sepia");
+swp.applyFilter("invert");
+swp.applyFilter("blur");
+swp.applyFilter("none"); // Remove filter
 ```
 
 #### `crop(x, y, width, height)`
@@ -246,8 +254,8 @@ swp.reset();
 Export the edited image data.
 
 ```javascript
-const dataUrl = swp.getImageData('png');        // PNG format
-const dataUrl = swp.getImageData('jpeg', 0.9);  // JPEG with 90% quality
+const dataUrl = swp.getImageData("png"); // PNG format
+const dataUrl = swp.getImageData("jpeg", 0.9); // JPEG with 90% quality
 ```
 
 ### Events
@@ -255,16 +263,16 @@ const dataUrl = swp.getImageData('jpeg', 0.9);  // JPEG with 90% quality
 Listen to events using the `on()` method:
 
 ```javascript
-swp.on('load', () => {
-    console.log('Image loaded successfully');
+swp.on("load", () => {
+  console.log("Image loaded successfully");
 });
 
-swp.on('change', () => {
-    console.log('Image has been edited');
+swp.on("change", () => {
+  console.log("Image has been edited");
 });
 
-swp.on('save', () => {
-    console.log('Image saved');
+swp.on("save", () => {
+  console.log("Image saved");
 });
 ```
 
@@ -273,18 +281,9 @@ swp.on('save', () => {
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
 
-## Browser Compatibility
-
-SWP works on all modern browsers that support HTML5 Canvas API and CSS filters:
-
-- ✅ Chrome (latest 2 versions)
-- ✅ Firefox (latest 2 versions)
-- ✅ Edge (latest 2 versions)
-- ✅ Safari (latest 2 versions)
-
 ## License
 
-MIT License - Feel free to use in your projects!
+MIT License
 
 ## Contributing
 
