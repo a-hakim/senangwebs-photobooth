@@ -2,6 +2,8 @@
 
 A lightweight and easy-to-use JavaScript library for client-side photo editing. No dependencies, no server-side processing - everything happens in your browser!
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
+
 ![SenangWebs Photobooth Preview](https://raw.githubusercontent.com/a-hakim/senangwebs-photobooth/master/swp_preview.png)
 
 ## Quick Start
