@@ -1,297 +1,234 @@
-# SenangWebs Photobooth (SWP)
+# SenangWebs Photobooth
 
-A lightweight and easy-to-use JavaScript library for client-side photo editing. No dependencies, no server-side processing - everything happens in your browser!
+A professional browser-based image editor with Photoshop-like features. Built with vanilla JavaScript, no external dependencies except for icons.
 
-![SenangWebs Photobooth Preview](https://raw.githubusercontent.com/a-hakim/senangwebs-photobooth/master/swp_preview.png)
-
-## Quick Start
-
-### Development
-
-1. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-2. **Start development server:**
-
-   ```bash
-   npm run dev
-   ```
-
-   This will start a dev server at `http://localhost:3000` with hot reloading.
-
-3. **Build for production:**
-
-   ```bash
-   npm run build
-   ```
-
-   This creates optimized files in the `dist/` directory.
-
-### Using the Library
-
-#### Include the built files:
-
-```html
-<link rel="stylesheet" href="dist/swp.min.css" />
-<script src="dist/swp.min.js"></script>
-```
-
-#### Or use source files directly:
-
-```html
-<link rel="stylesheet" href="src/css/swp.css" />
-<script src="src/js/swp.js"></script>
-```
+![SenangWebs Photobooth](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Features
 
-- Cropping\*\* - Select and crop image areas with predefined aspect ratios
-- Rotating\*\* - Rotate images in 90-degree increments
-- Flipping\*\* - Flip images horizontally and vertically
-- Adjustments\*\* - Fine-tune brightness, contrast, and saturation
-- Filters\*\* - Apply pre-defined filters (Grayscale, Sepia, Invert, Blur)
-- **Export** - Save edited images in JPEG or PNG format
+### 🎨 Layer System
+- Multiple layers with full compositing
+- 24 blend modes (Normal, Multiply, Screen, Overlay, etc.)
+- Layer opacity, visibility, and locking
+- Merge, duplicate, and reorder layers
 
-## Usage
+### 🖌️ Professional Tools
+| Tool | Shortcut | Description |
+|------|----------|-------------|
+| Move | V | Move and transform layers |
+| Marquee | M | Rectangular/elliptical selection |
+| Brush | B | Customizable brush with pressure support |
+| Eraser | E | Erase with brush or block mode |
+| Fill | G | Flood fill with tolerance |
+| Gradient | G | Linear, radial, angular gradients |
+| Text | T | Add and edit text layers |
+| Shape | U | Rectangle, ellipse, line shapes |
+| Eyedropper | I | Pick colors from canvas |
+| Crop | C | Crop with aspect ratio presets |
+| Hand | H | Pan the canvas (or hold Space) |
+| Zoom | Z | Zoom in/out |
 
-### Programmatic Approach
+### 🎛️ Filters & Adjustments
+- Brightness, Contrast, Saturation
+- Hue Rotation
+- Blur, Sharpen
+- Grayscale, Sepia, Invert
 
-```html
-<div id="photobooth-container"></div>
+### ⌨️ Keyboard Shortcuts
+- `Ctrl+Z` / `Ctrl+Shift+Z` - Undo / Redo
+- `Ctrl+N` - New document
+- `Ctrl+O` - Open image
+- `Ctrl+S` - Save project
+- `Ctrl+E` - Export image
+- `[` / `]` - Decrease / Increase brush size
+- `X` - Swap foreground/background colors
+- `D` - Reset to black/white
+- `Tab` - Toggle panels
+- `Space` - Temporary hand tool
 
-<script>
-  const container = document.getElementById("photobooth-container");
-  const swp = new SWP(container, {
-    imageUrl: "path/to/your/image.jpg",
-    width: 800,
-    height: 600,
-  });
+### 💾 File Operations
+- Open images (PNG, JPEG, WebP)
+- Save projects as `.swp` files
+- Export to PNG, JPEG, WebP
+- Copy/Cut/Paste support
 
-  // Listen to events
-  swp.on("load", () => console.log("Image loaded"));
-  swp.on("change", () => console.log("Image changed"));
-  swp.on("save", () => console.log("Image saved"));
-</script>
+## Installation
+
+### NPM
+```bash
+npm install senangwebs-photobooth
 ```
 
-### Declarative Approach
-
-Use HTML data attributes for zero-JavaScript configuration:
-
+### CDN
 ```html
-<!-- Basic -->
-<div data-swp></div>
-
-<!-- With configuration -->
-<div
-  data-swp
-  data-swp-width="900"
-  data-swp-height="600"
-  data-swp-show-labels="false"
-></div>
-
-<!-- With custom labels (simple format) -->
-<div
-  data-swp
-  data-swp-labels="upload: 'Muat Naik'; save: 'Simpan'; reset: 'Set Semula'"
-></div>
-
-<!-- With custom labels (JSON format) -->
-<div
-  data-swp
-  data-swp-labels='{"upload":"Télécharger","save":"Enregistrer"}'
-></div>
+<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2/dist/swp.css">
+<script src="https://unpkg.com/senangwebs-photobooth@2/dist/swp.js"></script>
 ```
 
-**Available Data Attributes:**
+### Manual Download
+Download `swp.js` and `swp.css` from the `dist` folder.
 
-- `data-swp` - Enable auto-initialization
-- `data-swp-width` - Canvas width (number)
-- `data-swp-height` - Canvas height (number)
-- `data-swp-image-url` - Initial image URL
-- `data-swp-show-icons` - Show/hide icons ("true" or "false")
-- `data-swp-show-labels` - Show/hide labels ("true" or "false")
-- `data-swp-labels` - Custom labels (see formats above)
+## Quick Start
 
-The library will automatically initialize when the DOM is ready.
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="dist/swp.css">
+  <style>
+    #editor { width: 100%; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="editor"></div>
+  <script src="dist/swp.js"></script>
+  <script>
+    const editor = new SWP('#editor', {
+      width: 1920,
+      height: 1080
+    });
+    
+    editor.on('ready', () => {
+      console.log('Editor ready!');
+    });
+  </script>
+</body>
+</html>
+```
 
 ## API Reference
 
-### Initialization
-
+### Constructor
 ```javascript
-const swp = new SWP(container, options);
+const editor = new SWP(container, options);
 ```
 
-**Options:**
-
-- `imageUrl` (String) - URL of the image to load
-- `width` (Number) - Width of the editor in pixels (default: 800)
-- `height` (Number) - Height of the editor in pixels (default: 600)
-- `showIcons` (Boolean) - Show icons in toolbar buttons (default: true)
-- `showLabels` (Boolean) - Show text labels in toolbar buttons (default: true)
-- `labels` (Object) - Custom labels for toolbar buttons
-  - `upload` (String|null) - Label for upload button (default: 'Upload')
-  - `rotateLeft` (String|null) - Label for rotate left button (default: null)
-  - `rotateRight` (String|null) - Label for rotate right button (default: null)
-  - `flipH` (String|null) - Label for flip horizontal button (default: null)
-  - `flipV` (String|null) - Label for flip vertical button (default: null)
-  - `resize` (String|null) - Label for resize button (default: 'Resize')
-  - `adjust` (String|null) - Label for adjustments button (default: 'Adjust')
-  - `filters` (String|null) - Label for filters button (default: 'Filters')
-  - `reset` (String|null) - Label for reset button (default: 'Reset')
-  - `save` (String|null) - Label for save button (default: 'Save')
-
-**Customization Examples:**
-
-```javascript
-// Icons only (compact view)
-const swp = new SWP(container, {
-  showLabels: false,
-});
-
-// Custom labels (multilingual support)
-const swp = new SWP(container, {
-  labels: {
-    upload: "Télécharger",
-    save: "Enregistrer",
-    reset: "Réinitialiser",
-  },
-});
-
-// Hide specific labels (set to null)
-const swp = new SWP(container, {
-  labels: {
-    rotateLeft: null, // No label, icon only
-    rotateRight: null,
-  },
-});
-
-// Show labels for rotate and flip buttons
-const swp = new SWP(container, {
-  labels: {
-    rotateLeft: "Rotate Left",
-    rotateRight: "Rotate Right",
-    flipH: "Flip Horizontal",
-    flipV: "Flip Vertical",
-  },
-});
-```
-
-**Note:** By default, `rotateLeft`, `rotateRight`, `flipH`, and `flipV` have `null` labels (icon-only display) to keep the toolbar compact. You can add custom labels to these buttons as shown above.
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `width` | number | 1920 | Canvas width |
+| `height` | number | 1080 | Canvas height |
+| `theme` | string | 'dark' | UI theme |
 
 ### Methods
 
-#### `loadImage(imageUrl)`
-
-Load a new image into the editor.
-
+#### Document Operations
 ```javascript
-swp.loadImage("path/to/image.jpg");
+// Create new document
+editor.newDocument(width, height, background);
+
+// Load image from URL
+await editor.loadImage('path/to/image.jpg');
+
+// Export as data URL
+const dataURL = editor.getImageData('png', 1.0);
+
+// Download export
+editor.export('png', 1.0);
 ```
 
-#### `rotate(degrees)`
-
-Rotate the image by specified degrees.
-
+#### History
 ```javascript
-swp.rotate(90); // Rotate 90 degrees clockwise
-swp.rotate(-90); // Rotate 90 degrees counter-clockwise
+editor.undo();
+editor.redo();
 ```
 
-#### `flip(direction)`
-
-Flip the image horizontally or vertically.
-
+#### Tools
 ```javascript
-swp.flip("horizontal");
-swp.flip("vertical");
+editor.setTool('brush');
+editor.setTool('move');
 ```
 
-#### `setAdjustment(adjustment, value)`
-
-Apply adjustments to the image.
-
+#### Filters
 ```javascript
-swp.setAdjustment("brightness", 150); // Range: 0-200
-swp.setAdjustment("contrast", 120); // Range: 0-200
-swp.setAdjustment("saturation", 80); // Range: 0-200
+editor.applyFilter('brightness', { value: 20 });
+editor.applyFilter('blur', { radius: 5 });
+editor.applyFilter('grayscale');
 ```
 
-#### `applyFilter(filterName)`
-
-Apply a pre-defined filter.
-
+#### Events
 ```javascript
-swp.applyFilter("grayscale");
-swp.applyFilter("sepia");
-swp.applyFilter("invert");
-swp.applyFilter("blur");
-swp.applyFilter("none"); // Remove filter
+editor.on('ready', () => { });
+editor.on('tool:select', (data) => { });
+editor.on('layer:add', (data) => { });
+editor.on('history:push', (data) => { });
 ```
 
-#### `crop(x, y, width, height)`
+### Available Events
+- `ready` - Editor initialized
+- `tool:select` - Tool changed
+- `tool:start` - Tool action started
+- `tool:end` - Tool action ended
+- `layer:add` - Layer added
+- `layer:remove` - Layer removed
+- `layer:select` - Layer selected
+- `history:push` - History state added
+- `history:undo` - Undo performed
+- `history:redo` - Redo performed
+- `canvas:zoom` - Zoom changed
+- `color:foreground` - Foreground color changed
+- `color:background` - Background color changed
 
-Crop the image to specified dimensions.
+## Project Structure
 
-```javascript
-swp.crop(100, 100, 400, 300);
+```
+src/
+├── js/
+│   ├── core/           # Core systems
+│   │   ├── EventEmitter.js
+│   │   ├── Canvas.js
+│   │   ├── History.js
+│   │   └── Keyboard.js
+│   ├── layers/         # Layer system
+│   │   ├── Layer.js
+│   │   ├── LayerManager.js
+│   │   └── BlendModes.js
+│   ├── tools/          # Drawing tools
+│   │   ├── BaseTool.js
+│   │   ├── ToolManager.js
+│   │   ├── BrushTool.js
+│   │   └── ... (12 tools)
+│   ├── selection/      # Selection system
+│   │   └── Selection.js
+│   ├── filters/        # Image filters
+│   │   └── FilterManager.js
+│   ├── ui/             # User interface
+│   │   ├── UI.js
+│   │   └── ColorManager.js
+│   ├── io/             # File operations
+│   │   ├── FileManager.js
+│   │   └── Clipboard.js
+│   └── swp.js          # Main entry
+├── css/
+│   └── swp.css         # Styles
+└── dist/               # Built files
 ```
 
-#### `reset()`
+## Development
 
-Reset all edits and revert to original image.
+```bash
+# Install dependencies
+npm install
 
-```javascript
-swp.reset();
+# Development mode with watch
+npm run dev
+
+# Production build
+npm run build
 ```
 
-#### `getImageData(format, quality)`
+## Browser Support
 
-Export the edited image data.
-
-```javascript
-const dataUrl = swp.getImageData("png"); // PNG format
-const dataUrl = swp.getImageData("jpeg", 0.9); // JPEG with 90% quality
-```
-
-### Events
-
-Listen to events using the `on()` method:
-
-```javascript
-swp.on("load", () => {
-  console.log("Image loaded successfully");
-});
-
-swp.on("change", () => {
-  console.log("Image has been edited");
-});
-
-swp.on("save", () => {
-  console.log("Image saved");
-});
-```
-
-## NPM Scripts
-
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
+- Chrome 80+
+- Firefox 75+
+- Safari 13+
+- Edge 80+
 
 ## License
 
-MIT License
+MIT License - see [LICENSE.md](LICENSE.md)
 
-## Contributing
+## Credits
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Future Enhancements
-
-- More filters and adjustments
-- Text and sticker overlays
-- Touch gesture support
-- Framework integrations (React, Vue, Angular)
+- Icons by [SenangStart Icons](https://www.npmjs.com/package/@bookklik/senangstart-icons)
+- Built by [a-hakim](https://github.com/a-hakim)

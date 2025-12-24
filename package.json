@@ -1,9 +1,9 @@
 {
   "name": "senangwebs-photobooth",
-  "version": "1.0.2",
-  "description": "A lightweight client-side photo editing library",
-  "main": "dist/swp.min.js",
-  "style": "dist/swp.min.css",
+  "version": "2.0.0",
+  "description": "A professional browser-based image editor with layers, tools, filters, and Photoshop-like features",
+  "main": "dist/swp.js",
+  "style": "dist/swp.css",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
@@ -13,7 +13,11 @@
     "photo-editor",
     "image-editing",
     "canvas",
-    "photobooth",
+    "layers",
+    "photoshop",
+    "drawing",
+    "brush",
+    "filters",
     "javascript"
   ],
   "author": "a-hakim",

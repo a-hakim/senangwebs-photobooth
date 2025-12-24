@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SenangWebs Photobooth - Photo Editor</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    #editor {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  
+  <!-- SWP Library -->
+  <link rel="stylesheet" href="../dist/swp.css">
+</head>
+<body>
+  <div id="editor"></div>
+  
+  <!-- SWP Library Script -->
+  <script src="../dist/swp.js"></script>
+  
+  <script>
+    // Initialize SenangWebs Photobooth
+    const editor = new SWP('#editor', {
+      width: 1920,
+      height: 1080,
+      theme: 'dark'
+    });
+    
+    // Event listeners
+    editor.on('ready', () => {
+      console.log('🎨 SenangWebs Photobooth is ready!');
+      console.log('Keyboard shortcuts:');
+      console.log('  V - Move tool');
+      console.log('  B - Brush tool');
+      console.log('  E - Eraser tool');
+      console.log('  T - Text tool');
+      console.log('  M - Marquee selection');
+      console.log('  G - Gradient/Fill tool');
+      console.log('  U - Shape tool');
+      console.log('  I - Eyedropper');
+      console.log('  C - Crop tool');
+      console.log('  H - Hand tool (or hold Space)');
+      console.log('  Z - Zoom tool');
+      console.log('  X - Swap colors');
+      console.log('  D - Reset colors');
+      console.log('  [ / ] - Brush size');
+      console.log('  Ctrl+Z - Undo');
+      console.log('  Ctrl+Shift+Z - Redo');
+      console.log('  Ctrl+N - New document');
+      console.log('  Ctrl+O - Open image');
+      console.log('  Ctrl+S - Save project');
+      console.log('  Ctrl+E - Export');
+    });
+    
+    editor.on('tool:select', (data) => {
+      console.log(`Tool selected: ${data.tool}`);
+    });
+    
+    editor.on('layer:add', (data) => {
+      console.log(`Layer added: ${data.layer.name}`);
+    });
+    
+    editor.on('history:push', (data) => {
+      console.log(`History: ${data.actionName}`);
+    });
+  </script>
+</body>
+</html>

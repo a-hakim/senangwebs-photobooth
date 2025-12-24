@@ -1,54 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SenangWebs Photobooth - Professional Photo Editor</title>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- SWP Library -->
-    <link rel="stylesheet" href="../dist/swp.css" />
-  </head>
-  <body class="min-h-screen p-8 bg-gray-100">
-    <main
-      class="container flex flex-col gap-8 items-center justify-center mx-auto"
-    >
-      <h2 class="text-2xl lg:text-4xl capitalize font-bold">
-        Declarative Approach
-      </h2>
-
-      <div
-        data-swp
-        data-swp-labels="rotateLeft: 'Rotate Left'; rotateRight: 'Rotate Right'; flipH: 'Flip H'; flipV: 'Flip V'; upload: 'Muat Naik'; resize: 'Tukar Saiz'; adjust: 'Laraskan'; filters: 'Penapis'; reset: 'Set Semula'; save: 'Simpan'"
-        class="border container h-[800px]"
-      >
-        <div data-swp-tools></div>
-        <div data-swp-canvas></div>
-      </div>
-
-      <h2 class="text-2xl lg:text-4xl capitalize font-bold">
-        Programmatic Approach
-      </h2>
-
-      <div id="photobooth" class="border container h-[600px]"></div>
-    </main>
-
-    <!-- SWP Library Script -->
-    <script src="../dist/swp.js"></script>
-
-    <!-- Application Script -->
-    <script>
-      // Console output helper
-      const consoleOutput = document.getElementById("console-output");
-      const statusElement = document.getElementById("status");
-
-      // Initialize SWP
-      const swpInstance = new SWP(document.getElementById("photobooth"), {
-        width: 900,
-        height: 400,
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SenangWebs Photobooth - Demo</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, sans-serif;
+    }
+    
+    #editor {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Demo Controls Overlay */
+    .demo-controls {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 8px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+    }
+    
+    .demo-btn {
+      padding: 8px 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    
+    .demo-btn:hover {
+      background: #60a5fa;
+    }
+    
+    .demo-btn.secondary {
+      background: #374151;
+    }
+    
+    .demo-btn.secondary:hover {
+      background: #4b5563;
+    }
+  </style>
+  
+  <link rel="stylesheet" href="../dist/swp.css">
+</head>
+<body>
+  <div id="editor"></div>
+  
+  <!-- Demo Control Bar -->
+  <div class="demo-controls">
+    <button class="demo-btn" onclick="loadSampleImage()">Load Sample Image</button>
+    <button class="demo-btn secondary" onclick="editor.file.newDocument({ width: 1280, height: 720 })">New 720p</button>
+    <button class="demo-btn secondary" onclick="editor.file.newDocument({ width: 1920, height: 1080 })">New 1080p</button>
+    <button class="demo-btn secondary" onclick="editor.export('png')">Export PNG</button>
+  </div>
+  
+  <script src="../dist/swp.js"></script>
+  
+  <script>
+    // Initialize editor
+    const editor = new SWP('#editor', {
+      width: 1920,
+      height: 1080
+    });
+    
+    // Load a sample image
+    function loadSampleImage() {
+      const sampleUrl = 'https://picsum.photos/1920/1080';
+      editor.loadImage(sampleUrl).then(() => {
+        console.log('Sample image loaded!');
+      }).catch(err => {
+        console.error('Failed to load sample image:', err);
+        alert('Could not load sample image. Try opening a local file.');
       });
-    </script>
-  </body>
+    }
+    
+    // Event listeners for demo
+    editor.on('ready', () => {
+      console.log('%c🎨 SenangWebs Photobooth v2.0.0', 'color: #3b82f6; font-size: 16px; font-weight: bold;');
+      console.log('%cProfessional Image Editor', 'color: #888; font-size: 12px;');
+      console.log('');
+      console.log('%cKeyboard Shortcuts:', 'font-weight: bold;');
+      console.log('  V - Move        B - Brush       E - Eraser');
+      console.log('  M - Marquee     G - Fill/Grad   T - Text');
+      console.log('  U - Shape       I - Eyedropper  C - Crop');
+      console.log('  H - Hand        Z - Zoom        Space - Pan');
+      console.log('  [ ] - Brush Size    X - Swap Colors');
+      console.log('  Ctrl+Z - Undo       Ctrl+Shift+Z - Redo');
+    });
+
+    editor.on('layer:add', (data) => {
+      console.log(`Layer added: ${data.layer.name}`);
+    });
+    
+    editor.on('history:push', (data) => {
+      console.log(`History: ${data.actionName}`);
+    });
+  </script>
+</body>
 </html>

@@ -2,12 +2,9 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  entry: {
-    swp: './src/js/swp.js',
-    styles: './src/css/swp.css'
-  },
+  entry: './src/js/swp.js',
   output: {
-    filename: '[name].js',
+    filename: 'swp.js',
     path: path.resolve(__dirname, 'dist'),
     library: {
       name: 'SWP',
@@ -21,9 +18,7 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader'
-        }
+        use: { loader: 'babel-loader' }
       },
       {
         test: /\.css$/,
@@ -32,8 +27,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new MiniCssExtractPlugin({
-      filename: 'swp.css'
-    })
+    new MiniCssExtractPlugin({ filename: 'swp.css' })
   ]
 };
