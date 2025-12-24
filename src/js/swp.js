@@ -60,6 +60,9 @@ class SWP {
     // Initialize UI
     this.ui.init(this.container);
     
+    // Apply theme class
+    this.applyTheme(this.options.theme);
+    
     // Initialize canvas in workspace
     const workspace = this.ui.getWorkspace();
     this.canvas.init(workspace);
@@ -154,6 +157,25 @@ class SWP {
     }
   }
 
+  applyTheme(theme) {
+    // The container itself has .swp-app class added by UI.init()
+    const app = this.container.classList.contains('swp-app') 
+      ? this.container 
+      : this.container.querySelector('.swp-app');
+    if (app) {
+      app.classList.remove('swp-theme-dark', 'swp-theme-light');
+      app.classList.add(`swp-theme-${theme}`);
+    }
+    this.options.theme = theme;
+  }
+
+  setTheme(theme) {
+    if (theme === 'light' || theme === 'dark') {
+      this.applyTheme(theme);
+      this.events.emit(Events.CHANGE, { type: 'theme', theme });
+    }
+  }
+
   destroy() {
     this.keyboard.destroy();
     this.selection.destroy();
@@ -162,6 +184,68 @@ class SWP {
   }
 }
 
+// Static method to parse data attributes
+SWP.parseDataAttributes = function(element) {
+  const options = {};
+  
+  // Parse data-swp-* attributes
+  const dataset = element.dataset;
+  
+  // Width
+  if (dataset.swpWidth) {
+    options.width = parseInt(dataset.swpWidth, 10);
+  }
+  
+  // Height
+  if (dataset.swpHeight) {
+    options.height = parseInt(dataset.swpHeight, 10);
+  }
+  
+  // Theme
+  if (dataset.swpTheme) {
+    options.theme = dataset.swpTheme;
+  }
+  
+  // Any other data-swp-* attributes (convert kebab-case to camelCase)
+  for (const key in dataset) {
+    if (key.startsWith('swp') && key !== 'swp') {
+      // Remove 'swp' prefix and convert first char to lowercase
+      const optionKey = key.slice(3).charAt(0).toLowerCase() + key.slice(4);
+      if (!(optionKey in options)) {
+        // Try to parse as number or boolean
+        let value = dataset[key];
+        if (value === 'true') value = true;
+        else if (value === 'false') value = false;
+        else if (!isNaN(value) && value !== '') value = parseFloat(value);
+        options[optionKey] = value;
+      }
+    }
+  }
+  
+  return options;
+};
+
+// Auto-initialize elements with data-swp attribute
+SWP.autoInit = function() {
+  const elements = document.querySelectorAll('[data-swp]');
+  const instances = [];
+  
+  elements.forEach(element => {
+    // Skip if already initialized
+    if (element.swpInstance) return;
+    
+    const options = SWP.parseDataAttributes(element);
+    const instance = new SWP(element, options);
+    element.swpInstance = instance;
+    instances.push(instance);
+  });
+  
+  return instances;
+};
+
+// Store all auto-initialized instances
+SWP.instances = [];
+
 // Export
 export { SWP, Events };
 export default SWP;
@@ -169,4 +253,14 @@ export default SWP;
 // Global access
 if (typeof window !== 'undefined') {
   window.SWP = SWP;
+  
+  // Auto-init on DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      SWP.instances = SWP.autoInit();
+    });
+  } else {
+    // DOM already loaded
+    SWP.instances = SWP.autoInit();
+  }
 }

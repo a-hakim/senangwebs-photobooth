@@ -1,6 +1,6 @@
 {
   "name": "senangwebs-photobooth",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A professional browser-based image editor with layers, tools, filters, and Photoshop-like features",
   "main": "dist/swp.js",
   "style": "dist/swp.css",

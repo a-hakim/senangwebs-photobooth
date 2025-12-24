@@ -1,19 +1,19 @@
 # SenangWebs Photobooth
 
-A professional browser-based image editor with Photoshop-like features. Built with vanilla JavaScript, no external dependencies except for icons.
+A professional browser-based image editor with layers, tools, filters, and Photoshop-like features.
 
-![SenangWebs Photobooth](https://img.shields.io/badge/version-2.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
+[![Built with SenangStart Icons](https://img.shields.io/badge/Built%20with-SenangStart%20Icons-2563EB.svg)](https://github.com/bookklik-technologies/senangstart-icons)
 
 ## Features
 
-### 🎨 Layer System
+### Layer System
 - Multiple layers with full compositing
 - 24 blend modes (Normal, Multiply, Screen, Overlay, etc.)
 - Layer opacity, visibility, and locking
 - Merge, duplicate, and reorder layers
 
-### 🖌️ Professional Tools
+### Professional Tools
 | Tool | Shortcut | Description |
 |------|----------|-------------|
 | Move | V | Move and transform layers |
@@ -29,13 +29,13 @@ A professional browser-based image editor with Photoshop-like features. Built wi
 | Hand | H | Pan the canvas (or hold Space) |
 | Zoom | Z | Zoom in/out |
 
-### 🎛️ Filters & Adjustments
+### Filters & Adjustments
 - Brightness, Contrast, Saturation
 - Hue Rotation
 - Blur, Sharpen
 - Grayscale, Sepia, Invert
 
-### ⌨️ Keyboard Shortcuts
+### Keyboard Shortcuts
 - `Ctrl+Z` / `Ctrl+Shift+Z` - Undo / Redo
 - `Ctrl+N` - New document
 - `Ctrl+O` - Open image
@@ -47,7 +47,7 @@ A professional browser-based image editor with Photoshop-like features. Built wi
 - `Tab` - Toggle panels
 - `Space` - Temporary hand tool
 
-### 💾 File Operations
+### File Operations
 - Open images (PNG, JPEG, WebP)
 - Save projects as `.swp` files
 - Export to PNG, JPEG, WebP
@@ -62,14 +62,18 @@ npm install senangwebs-photobooth
 
 ### CDN
 ```html
-<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2/dist/swp.css">
-<script src="https://unpkg.com/senangwebs-photobooth@2/dist/swp.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.css">
+<script src="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.js"></script>
 ```
 
 ### Manual Download
 Download `swp.js` and `swp.css` from the `dist` folder.
 
 ## Quick Start
+
+SenangWebs Photobooth supports two initialization methods: JavaScript API and data attributes.
+
+### JavaScript API
 
 ```html
 <!DOCTYPE html>
@@ -86,7 +90,8 @@ Download `swp.js` and `swp.css` from the `dist` folder.
   <script>
     const editor = new SWP('#editor', {
       width: 1920,
-      height: 1080
+      height: 1080,
+      theme: 'dark'
     });
     
     editor.on('ready', () => {
@@ -96,6 +101,53 @@ Download `swp.js` and `swp.css` from the `dist` folder.
 </body>
 </html>
 ```
+
+### Data Attribute Initialization
+
+You can also initialize the editor using data attributes for a no-code setup:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="dist/swp.css">
+  <style>
+    #editor { width: 100%; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="editor" 
+       data-swp 
+       data-swp-width="1920" 
+       data-swp-height="1080" 
+       data-swp-theme="dark">
+  </div>
+  <script src="dist/swp.js"></script>
+</body>
+</html>
+```
+
+#### Accessing Data Attribute Instances
+
+```javascript
+// Access via element property
+const editor = document.getElementById('editor').swpInstance;
+
+// Access all auto-initialized instances
+const allEditors = SWP.instances;
+
+// Manually trigger auto-init (if needed after dynamic content load)
+SWP.autoInit();
+```
+
+#### Available Data Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `data-swp` | - | - | Required. Marks element for auto-initialization |
+| `data-swp-width` | number | 1920 | Canvas width in pixels |
+| `data-swp-height` | number | 1080 | Canvas height in pixels |
+| `data-swp-theme` | string | 'dark' | UI theme |
 
 ## API Reference
 
@@ -169,41 +221,6 @@ editor.on('history:push', (data) => { });
 - `color:foreground` - Foreground color changed
 - `color:background` - Background color changed
 
-## Project Structure
-
-```
-src/
-├── js/
-│   ├── core/           # Core systems
-│   │   ├── EventEmitter.js
-│   │   ├── Canvas.js
-│   │   ├── History.js
-│   │   └── Keyboard.js
-│   ├── layers/         # Layer system
-│   │   ├── Layer.js
-│   │   ├── LayerManager.js
-│   │   └── BlendModes.js
-│   ├── tools/          # Drawing tools
-│   │   ├── BaseTool.js
-│   │   ├── ToolManager.js
-│   │   ├── BrushTool.js
-│   │   └── ... (12 tools)
-│   ├── selection/      # Selection system
-│   │   └── Selection.js
-│   ├── filters/        # Image filters
-│   │   └── FilterManager.js
-│   ├── ui/             # User interface
-│   │   ├── UI.js
-│   │   └── ColorManager.js
-│   ├── io/             # File operations
-│   │   ├── FileManager.js
-│   │   └── Clipboard.js
-│   └── swp.js          # Main entry
-├── css/
-│   └── swp.css         # Styles
-└── dist/               # Built files
-```
-
 ## Development
 
 ```bash
@@ -217,18 +234,6 @@ npm run dev
 npm run build
 ```
 
-## Browser Support
-
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
-
 ## License
 
-MIT License - see [LICENSE.md](LICENSE.md)
-
-## Credits
-
-- Icons by [SenangStart Icons](https://www.npmjs.com/package/@bookklik/senangstart-icons)
-- Built by [a-hakim](https://github.com/a-hakim)
+MIT License

@@ -30,6 +30,42 @@
   --swp-transition: 0.15s ease;
 }
 
+/* Light Theme */
+.swp-app.swp-theme-light {
+  --swp-bg-dark: #ffffff;
+  --swp-bg-medium: #f5f5f5;
+  --swp-bg-light: #e8e8e8;
+  --swp-bg-hover: #d4d4d4;
+  --swp-border: #d1d1d1;
+  --swp-border-light: #c0c0c0;
+  --swp-text: #1a1a1a;
+  --swp-text-secondary: #525252;
+  --swp-text-dim: #737373;
+  --swp-accent: #2563eb;
+  --swp-accent-hover: #1d4ed8;
+  --swp-accent-dim: rgba(37, 99, 235, 0.15);
+  --swp-success: #16a34a;
+  --swp-warning: #d97706;
+  --swp-error: #dc2626;
+  --swp-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.swp-app.swp-theme-light .swp-workspace {
+  background: linear-gradient(135deg, #e0e0e0 0%, #f0f0f0 100%);
+}
+
+.swp-app.swp-theme-light .swp-tool-btn.active {
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
+.swp-app.swp-theme-light .swp-quick-fg {
+  border-color: var(--swp-bg-medium);
+}
+
+.swp-app.swp-theme-light .swp-quick-bg {
+  border-color: var(--swp-bg-medium);
+}
+
 /* Reset */
 .swp-app *, .swp-app *::before, .swp-app *::after {
   box-sizing: border-box;

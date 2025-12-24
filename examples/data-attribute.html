@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SenangWebs Photobooth - Data Attribute Init</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    #editor {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  
+  <!-- SWP Library -->
+  <link rel="stylesheet" href="../dist/swp.css">
+</head>
+<body>
+  <!-- Data attribute initialization - no JavaScript needed! -->
+  <div id="editor" 
+       data-swp 
+       data-swp-width="1920" 
+       data-swp-height="1080" 
+       data-swp-theme="light">
+  </div>
+  
+  <!-- SWP Library Script -->
+  <script src="../dist/swp.js"></script>
+  
+  <script>
+    // Access the auto-initialized instance via element.swpInstance
+    const editorElement = document.getElementById('editor');
+    
+    // Wait for the instance to be ready
+    const checkInstance = () => {
+      if (editorElement.swpInstance) {
+        const editor = editorElement.swpInstance;
+        
+        editor.on('ready', () => {
+          console.log('🎨 SenangWebs Photobooth initialized via data attributes!');
+        });
+        
+        editor.on('tool:select', (data) => {
+          console.log(`Tool selected: ${data.tool}`);
+        });
+      } else {
+        setTimeout(checkInstance, 10);
+      }
+    };
+    checkInstance();
+    
+    // Alternative: Access all instances via SWP.instances
+    // console.log('All instances:', SWP.instances);
+  </script>
+</body>
+</html>
