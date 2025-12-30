@@ -31,10 +31,18 @@ export class UI {
             <ss-icon icon="folder-open" thickness="2"></ss-icon>
             <span>Load</span>
           </button>
-          <button class="swp-header-btn" data-action="download" title="Download">
-            <ss-icon icon="save" thickness="2"></ss-icon>
-            <span>Download</span>
-          </button>
+          <div class="swp-download-dropdown">
+            <button class="swp-header-btn" data-action="toggle-download" title="Download">
+              <ss-icon icon="save" thickness="2"></ss-icon>
+              <span>Download</span>
+              <ss-icon icon="chevron-down" thickness="2" class="swp-dropdown-arrow"></ss-icon>
+            </button>
+            <div class="swp-dropdown-menu" hidden>
+              <button class="swp-dropdown-item" data-format="png">PNG</button>
+              <button class="swp-dropdown-item" data-format="jpeg">JPEG</button>
+              <button class="swp-dropdown-item" data-format="webp">WebP</button>
+            </div>
+          </div>
         </div>
         <div class="swp-header-center">
           <button class="swp-icon-btn" data-action="undo" title="Undo (Ctrl+Z)">
@@ -124,6 +132,27 @@ export class UI {
       this.closeSidePanel();
     });
     
+    // Download dropdown handling
+    const downloadDropdown = this.container.querySelector('.swp-download-dropdown');
+    const dropdownMenu = downloadDropdown?.querySelector('.swp-dropdown-menu');
+    
+    // Format selection
+    dropdownMenu?.querySelectorAll('[data-format]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const format = item.dataset.format;
+        this.app.file.export(format);
+        dropdownMenu.hidden = true;
+      });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (dropdownMenu && !downloadDropdown.contains(e.target)) {
+        dropdownMenu.hidden = true;
+      }
+    });
+    
     header.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -133,8 +162,10 @@ export class UI {
         case 'load':
           this.openFileDialog();
           break;
-        case 'download':
-          this.app.file.export('png');
+        case 'toggle-download':
+          if (dropdownMenu) {
+            dropdownMenu.hidden = !dropdownMenu.hidden;
+          }
           break;
         case 'undo':
           this.app.history.undo();
