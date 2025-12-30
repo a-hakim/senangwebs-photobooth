@@ -32,6 +32,7 @@ class SWP {
       width: options.width || 1920,
       height: options.height || 1080,
       theme: options.theme || 'dark',
+      accentColor: options.accentColor || '#00FF99',
       ...options
     };
 
@@ -62,6 +63,9 @@ class SWP {
     
     // Apply theme class
     this.applyTheme(this.options.theme);
+    
+    // Apply accent color
+    this.applyAccentColor(this.options.accentColor);
     
     // Initialize canvas in workspace
     const workspace = this.ui.getWorkspace();
@@ -167,6 +171,49 @@ class SWP {
       app.classList.add(`swp-theme-${theme}`);
     }
     this.options.theme = theme;
+  }
+
+  applyAccentColor(color) {
+    const app = this.container.classList.contains('swp-app') 
+      ? this.container 
+      : this.container.querySelector('.swp-app');
+    if (app && color) {
+      // Parse hex color to RGB for variations
+      const hex = color.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      // Create lighter hover color (add 20% brightness)
+      const lighten = (val) => Math.min(255, Math.round(val + (255 - val) * 0.2));
+      const hoverR = lighten(r);
+      const hoverG = lighten(g);
+      const hoverB = lighten(b);
+      const hoverColor = `#${hoverR.toString(16).padStart(2, '0')}${hoverG.toString(16).padStart(2, '0')}${hoverB.toString(16).padStart(2, '0')}`;
+      
+      // Calculate relative luminance for contrast (WCAG formula)
+      const toLinear = (val) => {
+        const sRGB = val / 255;
+        return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+      };
+      const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+      
+      // Choose contrasting text color (black for light backgrounds, white for dark)
+      // Threshold 0.179 is the crossover point where black/white have equal contrast
+      const contrastColor = luminance > 0.179 ? '#000000' : '#ffffff';
+      
+      // Apply CSS variables
+      app.style.setProperty('--swp-accent', color);
+      app.style.setProperty('--swp-accent-hover', hoverColor);
+      app.style.setProperty('--swp-accent-dim', `rgba(${r}, ${g}, ${b}, 0.2)`);
+      app.style.setProperty('--swp-accent-contrast', contrastColor);
+    }
+    this.options.accentColor = color;
+  }
+
+  setAccentColor(color) {
+    this.applyAccentColor(color);
+    this.events.emit(Events.CHANGE, { type: 'accentColor', color });
   }
 
   setTheme(theme) {

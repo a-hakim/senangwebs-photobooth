@@ -18,9 +18,10 @@
   --swp-text: #ffffff;
   --swp-text-secondary: #b0b0b0;
   --swp-text-dim: #808080;
-  --swp-accent: #5b9ef4;
-  --swp-accent-hover: #7ab4ff;
-  --swp-accent-dim: rgba(91, 158, 244, 0.2);
+  --swp-accent: #00FF99;
+  --swp-accent-hover: #33ffad;
+  --swp-accent-dim: rgba(0, 255, 153, 0.2);
+  --swp-accent-contrast: #000000;
   --swp-success: #4ade80;
   --swp-warning: #fbbf24;
   --swp-error: #f87171;
@@ -121,7 +122,7 @@
 .swp-header-btn:hover {
   background: var(--swp-accent);
   border-color: var(--swp-accent);
-  color: white;
+  color: var(--swp-accent-contrast);
 }
 
 .swp-header-btn ss-icon {
@@ -189,7 +190,7 @@
 
 .swp-dropdown-item:hover {
   background: var(--swp-accent);
-  color: white;
+  color: var(--swp-accent-contrast);
 }
 
 .swp-dropdown-item:not(:last-child) {
@@ -318,8 +319,7 @@
 
 .swp-menu-item.active {
   background: var(--swp-accent);
-  color: white;
-  box-shadow: 0 4px 16px rgba(91, 158, 244, 0.4);
+  color: var(--swp-accent-contrast);
 }
 
 .swp-menu-item ss-icon {
@@ -426,7 +426,7 @@
 
 .swp-submenu-btn.active {
   background: var(--swp-accent);
-  color: white;
+  color: var(--swp-accent-contrast);
   border-color: var(--swp-accent);
 }
 
@@ -620,7 +620,7 @@
 
 .swp-btn-primary {
   background: var(--swp-accent);
-  color: white;
+  color: var(--swp-accent-contrast);
   border-color: var(--swp-accent);
 }
 
