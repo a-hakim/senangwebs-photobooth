@@ -180,6 +180,37 @@ export class CropTool extends BaseTool {
   }
 
   /**
+   * Set aspect ratio
+   * @param {number|null} ratio - Aspect ratio (null for free)
+   */
+  setAspectRatio(ratio) {
+    if (ratio === null) {
+      this.options.aspectRatio = 'free';
+    } else if (ratio === 1) {
+      this.options.aspectRatio = '1:1';
+    } else if (Math.abs(ratio - 4/3) < 0.01) {
+      this.options.aspectRatio = '4:3';
+    } else if (Math.abs(ratio - 16/9) < 0.01) {
+      this.options.aspectRatio = '16:9';
+    } else {
+      // For custom ratios, store as 'custom' and use numeric value
+      this.options.aspectRatio = 'custom';
+      this.options.customRatio = ratio;
+    }
+    
+    // Update crop bounds if already cropping
+    if (this.cropBounds && this.cropBounds.width > 0) {
+      const bounds = this.cropBounds;
+      if (ratio) {
+        // Adjust height to match ratio
+        const newHeight = bounds.width / ratio;
+        bounds.height = Math.min(newHeight, this.app.canvas.height - bounds.y);
+      }
+      this.app.canvas.scheduleRender();
+    }
+  }
+
+  /**
    * Hit test crop handles
    * @param {Object} point - Point
    * @returns {string|null} Handle name
