@@ -398,14 +398,25 @@ export class LayerManager {
    */
   deleteSelection() {
     if (!this.activeLayer || this.activeLayer.locked) return;
+    
     if (!this.app.selection?.hasSelection()) {
-      this.activeLayer.clear();
+      // No selection - remove the active layer entirely (if more than one layer)
+      if (this.layers.length > 1) {
+        const layerId = this.activeLayer.id;
+        this.removeLayer(layerId);
+        this.app.history.pushState('Delete Layer');
+      } else {
+        // Only one layer - just clear its content
+        this.activeLayer.clear();
+        this.app.canvas.scheduleRender();
+        this.app.history.pushState('Clear Layer');
+      }
     } else {
-      // TODO: Clear selection area
+      // Clear selection area
       this.app.selection.clearSelection(this.activeLayer);
+      this.app.canvas.scheduleRender();
+      this.app.history.pushState('Delete Selection');
     }
-    this.app.canvas.scheduleRender();
-    this.app.history.pushState('Delete');
   }
 
   /**

@@ -101,6 +101,7 @@ class SWP {
         if (layer) {
           layer.ctx.drawImage(img, 0, 0);
           this.canvas.render();
+          this.history.pushState('Load Image');
         }
         resolve();
       };

@@ -911,13 +911,65 @@ export class UI {
   }
 
   previewFilter(filterName, intensity) {
-    const normalizedIntensity = intensity / 100;
-    this.app.filters.previewFilter(filterName, { intensity: normalizedIntensity });
+    // Convert 0-100 intensity to appropriate filter values
+    let options = {};
+    switch (filterName) {
+      case 'brightness':
+        // Convert 0-100 to -128 to 128 range (50 = 0 change)
+        options.value = Math.round((intensity - 50) * 2.56);
+        break;
+      case 'contrast':
+        // Convert 0-100 to -128 to 128 range (50 = 0 change)
+        options.value = Math.round((intensity - 50) * 2.56);
+        break;
+      case 'saturation':
+        // Convert 0-100 to -100 to 100 range (50 = 0 change)
+        options.value = (intensity - 50) * 2;
+        break;
+      case 'blur':
+        // Convert 0-100 to 1-10 radius
+        options.radius = Math.max(1, Math.round(intensity / 10));
+        break;
+      case 'sharpen':
+        // Convert 0-100 to 0-2 amount
+        options.amount = intensity / 50;
+        break;
+      case 'hueRotate':
+        // Convert 0-100 to 0-360 degrees
+        options.angle = intensity * 3.6;
+        break;
+      default:
+        options.value = intensity;
+    }
+    this.app.filters.previewFilter(filterName, options);
   }
 
   applyFilter(filterName, intensity) {
-    const normalizedIntensity = intensity / 100;
-    this.app.filters.applyFilter(filterName, { intensity: normalizedIntensity });
+    // Convert 0-100 intensity to appropriate filter values
+    let options = {};
+    switch (filterName) {
+      case 'brightness':
+        options.value = Math.round((intensity - 50) * 2.56);
+        break;
+      case 'contrast':
+        options.value = Math.round((intensity - 50) * 2.56);
+        break;
+      case 'saturation':
+        options.value = (intensity - 50) * 2;
+        break;
+      case 'blur':
+        options.radius = Math.max(1, Math.round(intensity / 10));
+        break;
+      case 'sharpen':
+        options.amount = intensity / 50;
+        break;
+      case 'hueRotate':
+        options.angle = intensity * 3.6;
+        break;
+      default:
+        options.value = intensity;
+    }
+    this.app.filters.applyFilter(filterName, options);
   }
 
   resetCanvas() {

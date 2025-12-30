@@ -69,6 +69,7 @@ export class FileManager {
         const layer = this.app.layers.getActiveLayer();
         if (layer) {
           layer.ctx.drawImage(img, 0, 0);
+          this.app.history.pushState('Open Image');
         }
         URL.revokeObjectURL(url);
         this.projectName = file.name.replace(/\.[^/.]+$/, '');

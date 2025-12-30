@@ -35,7 +35,15 @@ export class FilterManager {
     const layer = this.app.layers.getActiveLayer();
     if (!layer?.ctx) return;
     
-    const imageData = layer.ctx.getImageData(0, 0, layer.width, layer.height);
+    // Use original image data if preview was active, otherwise get current
+    const imageData = this.originalImageData 
+      ? new ImageData(
+          new Uint8ClampedArray(this.originalImageData.data),
+          this.originalImageData.width, 
+          this.originalImageData.height
+        )
+      : layer.ctx.getImageData(0, 0, layer.width, layer.height);
+    
     const filtered = this.processFilter(filterName, imageData, options);
     
     layer.ctx.putImageData(filtered, 0, 0);
