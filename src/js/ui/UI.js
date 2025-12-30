@@ -100,6 +100,10 @@ export class UI {
           <ss-icon icon="arrow-left-right" thickness="2"></ss-icon>
           <span>Flip</span>
         </button>
+        <button class="swp-menu-item" data-menu="resize">
+          <ss-icon icon="sliders-vertical" thickness="2"></ss-icon>
+          <span>Resize</span>
+        </button>
         <button class="swp-menu-item" data-menu="draw">
           <ss-icon icon="pencil" thickness="2"></ss-icon>
           <span>Draw</span>
@@ -227,6 +231,7 @@ export class UI {
       'crop': 'crop',
       'rotate': 'move',
       'flip': 'move',
+      'resize': 'move',
       'draw': 'brush',
       'shape': 'shape',
       'text': 'text',
@@ -252,6 +257,9 @@ export class UI {
         break;
       case 'flip':
         this.renderFlipSubmenu(submenu);
+        break;
+      case 'resize':
+        this.renderResizeSubmenu(submenu);
         break;
       case 'draw':
         this.renderDrawSubmenu(submenu);
@@ -424,6 +432,101 @@ export class UI {
         this.flipCanvas(direction);
       });
     });
+  }
+
+  renderResizeSubmenu(submenu) {
+    const currentWidth = this.app.canvas.width;
+    const currentHeight = this.app.canvas.height;
+
+    submenu.innerHTML = `
+      <div class="swp-submenu-content">
+        <div class="swp-submenu-title">Resize Canvas</div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Dimensions</label>
+          <div class="swp-resize-inputs">
+            <div class="swp-input-group">
+              <label>Width</label>
+              <input type="number" class="swp-input" id="resizeWidth" value="${currentWidth}" min="1" max="10000">
+            </div>
+            <div class="swp-input-group">
+              <label>Height</label>
+              <input type="number" class="swp-input" id="resizeHeight" value="${currentHeight}" min="1" max="10000">
+            </div>
+          </div>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-checkbox-label">
+            <input type="checkbox" id="lockAspectRatio" checked>
+            <span>Lock aspect ratio</span>
+          </label>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Presets</label>
+          <div class="swp-btn-group swp-btn-group-wrap">
+            <button class="swp-submenu-btn swp-preset-btn" data-width="1920" data-height="1080">1920×1080</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="1280" data-height="720">1280×720</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="800" data-height="600">800×600</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="500" data-height="500">500×500</button>
+          </div>
+        </div>
+        <div class="swp-submenu-actions">
+          <button class="swp-btn" data-action="cancel">Cancel</button>
+          <button class="swp-btn swp-btn-primary" data-action="apply">Apply</button>
+        </div>
+      </div>
+    `;
+
+    this.bindResizeSubmenuEvents(submenu, currentWidth, currentHeight);
+  }
+
+  bindResizeSubmenuEvents(submenu, originalWidth, originalHeight) {
+    const widthInput = submenu.querySelector('#resizeWidth');
+    const heightInput = submenu.querySelector('#resizeHeight');
+    const lockCheckbox = submenu.querySelector('#lockAspectRatio');
+    const aspectRatio = originalWidth / originalHeight;
+
+    widthInput?.addEventListener('input', () => {
+      if (lockCheckbox?.checked) {
+        const newWidth = parseInt(widthInput.value) || 1;
+        heightInput.value = Math.round(newWidth / aspectRatio);
+      }
+    });
+
+    heightInput?.addEventListener('input', () => {
+      if (lockCheckbox?.checked) {
+        const newHeight = parseInt(heightInput.value) || 1;
+        widthInput.value = Math.round(newHeight * aspectRatio);
+      }
+    });
+
+    submenu.querySelectorAll('.swp-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        widthInput.value = btn.dataset.width;
+        heightInput.value = btn.dataset.height;
+        lockCheckbox.checked = false; // Uncheck to allow preset change
+      });
+    });
+
+    submenu.querySelector('[data-action="cancel"]')?.addEventListener('click', () => {
+      this.closeSubmenu();
+    });
+
+    submenu.querySelector('[data-action="apply"]')?.addEventListener('click', () => {
+      const newWidth = parseInt(widthInput.value) || originalWidth;
+      const newHeight = parseInt(heightInput.value) || originalHeight;
+      
+      if (newWidth !== originalWidth || newHeight !== originalHeight) {
+        this.resizeCanvas(newWidth, newHeight);
+      }
+      this.closeSubmenu();
+    });
+  }
+
+  resizeCanvas(width, height) {
+    this.app.history.pushState(`Resize to ${width}×${height}`);
+    this.app.canvas.resize(width, height);
+    this.app.canvas.fitToScreen();
+    this.app.canvas.render();
   }
 
   renderDrawSubmenu(submenu) {

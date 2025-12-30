@@ -521,6 +521,69 @@
   box-shadow: 0 0 0 3px var(--swp-accent-dim);
 }
 
+/* Input Field */
+.swp-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--swp-bg-dark);
+  color: var(--swp-text);
+  border: 1px solid var(--swp-border);
+  border-radius: var(--swp-radius-sm);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--swp-transition);
+}
+
+.swp-input:focus {
+  border-color: var(--swp-accent);
+  box-shadow: 0 0 0 3px var(--swp-accent-dim);
+}
+
+/* Resize Inputs */
+.swp-resize-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.swp-input-group {
+  flex: 1;
+}
+
+.swp-input-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--swp-text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Checkbox */
+.swp-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--swp-text);
+  cursor: pointer;
+}
+
+.swp-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--swp-accent);
+  cursor: pointer;
+}
+
+/* Button Group Wrap */
+.swp-btn-group-wrap {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swp-preset-btn {
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+}
+
 /* Submenu Actions */
 .swp-submenu-actions {
   display: flex;
