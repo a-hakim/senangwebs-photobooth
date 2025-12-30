@@ -953,9 +953,12 @@
 .swp-panel-actions {
   display: flex;
   gap: 8px;
-  padding: 12px;
+  padding: 8px;
   border-top: 1px solid var(--swp-border);
   background: var(--swp-bg-light);
+  justify-content: space-between;
+  margin-top: 12px;
+  border-radius: 10px;
 }
 
 .swp-btn-sm {
@@ -983,6 +986,6 @@
 /* Active state for header icon buttons */
 .swp-icon-btn.active {
   background: var(--swp-accent);
-  color: white;
+  color: var(--swp-accent-contrast);
 }
 

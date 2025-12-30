@@ -65,7 +65,7 @@ export class UI {
         </div>
         <div class="swp-header-right">
           <button class="swp-icon-btn" data-action="center" title="Center Canvas">
-            <ss-icon icon="minimize" thickness="2"></ss-icon>
+            <ss-icon icon="container" thickness="2"></ss-icon>
           </button>
           <button class="swp-icon-btn" data-action="fullscreen" title="Fullscreen">
             <ss-icon icon="focus" thickness="2"></ss-icon>
@@ -92,7 +92,7 @@ export class UI {
       <!-- Bottom Menu Bar -->
       <div class="swp-menu-bar">
         <button class="swp-menu-item" data-menu="crop">
-          <ss-icon icon="scissor" thickness="2"></ss-icon>
+          <ss-icon icon="crop" thickness="2"></ss-icon>
           <span>Crop</span>
         </button>
         <button class="swp-menu-item" data-menu="rotate">
@@ -112,11 +112,11 @@ export class UI {
           <span>Draw</span>
         </button>
         <button class="swp-menu-item" data-menu="shape">
-          <ss-icon icon="square" thickness="2"></ss-icon>
+          <ss-icon icon="shapes" thickness="2"></ss-icon>
           <span>Shape</span>
         </button>
         <button class="swp-menu-item" data-menu="text">
-          <ss-icon icon="font" thickness="2"></ss-icon>
+          <ss-icon icon="text" thickness="2"></ss-icon>
           <span>Text</span>
         </button>
         <button class="swp-menu-item" data-menu="filter">
@@ -355,13 +355,13 @@ export class UI {
       <div class="swp-submenu-content">
         <div class="swp-submenu-title">Rotate</div>
         <div class="swp-submenu-group">
-          <div class="swp-btn-group">
+          <div class="swp-btn-group" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
             <button class="swp-submenu-btn" data-rotate="-90">
-              <ss-icon icon="time-reset" thickness="2" style="transform: scaleX(-1)"></ss-icon>
+              <ss-icon icon="rotate-minus" thickness="2"></ss-icon>
               <span>-90°</span>
             </button>
             <button class="swp-submenu-btn" data-rotate="90">
-              <ss-icon icon="time-reset" thickness="2"></ss-icon>
+              <ss-icon icon="rotate-add" thickness="2"></ss-icon>
               <span>+90°</span>
             </button>
           </div>
@@ -420,11 +420,11 @@ export class UI {
         <div class="swp-submenu-group">
           <div class="swp-btn-group swp-btn-group-lg">
             <button class="swp-submenu-btn" data-flip="horizontal">
-              <ss-icon icon="arrow-left-right" thickness="2"></ss-icon>
+              <ss-icon icon="flip-horizontal" thickness="2"></ss-icon>
               <span>Horizontal</span>
             </button>
             <button class="swp-submenu-btn" data-flip="vertical">
-              <ss-icon icon="arrow-up-down" thickness="2"></ss-icon>
+              <ss-icon icon="flip-vertical" thickness="2"></ss-icon>
               <span>Vertical</span>
             </button>
           </div>
