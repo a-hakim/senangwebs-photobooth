@@ -64,6 +64,9 @@ export class UI {
           </button>
         </div>
         <div class="swp-header-right">
+          <button class="swp-icon-btn" data-action="center" title="Center Canvas">
+            <ss-icon icon="minimize" thickness="2"></ss-icon>
+          </button>
           <button class="swp-icon-btn" data-action="fullscreen" title="Fullscreen">
             <ss-icon icon="focus" thickness="2"></ss-icon>
           </button>
@@ -97,7 +100,7 @@ export class UI {
           <span>Rotate</span>
         </button>
         <button class="swp-menu-item" data-menu="flip">
-          <ss-icon icon="arrow-left-right" thickness="2"></ss-icon>
+          <ss-icon icon="arrow-left-arrow-right" thickness="2"></ss-icon>
           <span>Flip</span>
         </button>
         <button class="swp-menu-item" data-menu="resize">
@@ -185,6 +188,9 @@ export class UI {
           break;
         case 'reset':
           this.resetCanvas();
+          break;
+        case 'center':
+          this.app.canvas.fitToScreen();
           break;
         case 'fullscreen':
           this.toggleFullscreen();
