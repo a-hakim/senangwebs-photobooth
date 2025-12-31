@@ -5,6 +5,10 @@ A professional browser-based image editor with layers, tools, filters, and Photo
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![Built with SenangStart Icons](https://img.shields.io/badge/Built%20with-SenangStart%20Icons-2563EB.svg)](https://github.com/bookklik-technologies/senangstart-icons)
 
+| example 1                                                                                                        | example 2                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| ![SenangWebs Photobooth Preview 1](https://raw.githubusercontent.com/a-hakim/senangwebs-photobooth/master/swp_preview1.png) | ![SenangWebs Photobooth Preview 2](https://raw.githubusercontent.com/a-hakim/senangwebs-photobooth/master/swp_preview2.png) |
+
 ## Features
 
 ### Layer System
