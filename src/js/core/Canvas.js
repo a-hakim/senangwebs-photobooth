@@ -308,7 +308,11 @@ export class Canvas {
     this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
 
     // Fill with gray background
-    this.displayCtx.fillStyle = '#2a2a2a';
+    if (this.app.options.theme === 'dark') {
+      this.displayCtx.fillStyle = '#18181B';
+    } else {
+      this.displayCtx.fillStyle = '#f5f5f5';
+    }
     this.displayCtx.fillRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
 
     // Draw work canvas with transform
