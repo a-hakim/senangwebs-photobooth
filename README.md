@@ -12,26 +12,27 @@ A professional browser-based image editor with layers, tools, filters, and Photo
 - 24 blend modes (Normal, Multiply, Screen, Overlay, etc.)
 - Layer opacity, visibility, and locking
 - Merge, duplicate, and reorder layers
+- Layers panel with real-time updates
 
-### Professional Tools
-| Tool | Shortcut | Description |
-|------|----------|-------------|
-| Move | V | Move and transform layers |
-| Marquee | M | Rectangular/elliptical selection |
-| Brush | B | Customizable brush with pressure support |
-| Eraser | E | Erase with brush or block mode |
-| Fill | G | Flood fill with tolerance |
-| Gradient | G | Linear, radial, angular gradients |
-| Text | T | Add and edit text layers |
-| Shape | U | Rectangle, ellipse, line shapes |
-| Eyedropper | I | Pick colors from canvas |
-| Crop | C | Crop with aspect ratio presets |
-| Hand | H | Pan the canvas (or hold Space) |
-| Zoom | Z | Zoom in/out |
+### History & Layers Panels
+- **History Panel** - View and navigate undo/redo history
+- **Layers Panel** - Manage layers with visibility toggles and selection
+- Collapsible side panels with clean UI
+
+### Editing Tools
+| Menu | Description |
+|------|-------------|
+| Crop | Crop with aspect ratio presets (Free, 1:1, 4:3, 16:9) |
+| Rotate | Rotate by ±90° or custom angle slider |
+| Flip | Flip horizontal or vertical |
+| Resize | Resize canvas with presets and aspect ratio lock |
+| Draw | Brush tool with customizable size and color |
+| Shape | Rectangle, ellipse, line with fill and stroke options |
+| Text | Add text with font, size, color, and style controls |
+| Filter | Apply filters with intensity control |
 
 ### Filters & Adjustments
-- Brightness, Contrast, Saturation
-- Hue Rotation
+- Brightness, Contrast
 - Blur, Sharpen
 - Grayscale, Sepia, Invert
 
@@ -46,12 +47,13 @@ A professional browser-based image editor with layers, tools, filters, and Photo
 - `D` - Reset to black/white
 - `Tab` - Toggle panels
 - `Space` - Temporary hand tool
+- `DEL` - Delete selected layer
 
 ### File Operations
-- Open images (PNG, JPEG, WebP)
+- Load images (PNG, JPEG, WebP)
+- Download with format selection (PNG, JPEG, WebP)
 - Save projects as `.swp` files
 - Export to PNG, JPEG, WebP
-- Copy/Cut/Paste support
 
 ## Installation
 
@@ -79,19 +81,20 @@ SenangWebs Photobooth supports two initialization methods: JavaScript API and da
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="editor"></div>
-  <script src="dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.js"></script>
   <script>
     const editor = new SWP('#editor', {
       width: 1920,
       height: 1080,
-      theme: 'dark'
+      theme: 'dark',
+      accentColor: '#00FF99'
     });
     
     editor.on('ready', () => {
@@ -110,7 +113,7 @@ You can also initialize the editor using data attributes for a no-code setup:
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
@@ -120,9 +123,10 @@ You can also initialize the editor using data attributes for a no-code setup:
        data-swp 
        data-swp-width="1920" 
        data-swp-height="1080" 
-       data-swp-theme="dark">
+       data-swp-theme="dark"
+       data-swp-accent-color="#00FF99">
   </div>
-  <script src="dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@latest/dist/swp.js"></script>
 </body>
 </html>
 ```
@@ -147,7 +151,8 @@ SWP.autoInit();
 | `data-swp` | - | - | Required. Marks element for auto-initialization |
 | `data-swp-width` | number | 1920 | Canvas width in pixels |
 | `data-swp-height` | number | 1080 | Canvas height in pixels |
-| `data-swp-theme` | string | 'dark' | UI theme |
+| `data-swp-theme` | string | 'dark' | UI theme ('dark' or 'light') |
+| `data-swp-accent-color` | string | '#00FF99' | UI accent color (hex format) |
 
 ## API Reference
 
@@ -160,7 +165,8 @@ const editor = new SWP(container, options);
 |--------|------|---------|-------------|
 | `width` | number | 1920 | Canvas width |
 | `height` | number | 1080 | Canvas height |
-| `theme` | string | 'dark' | UI theme |
+| `theme` | string | 'dark' | UI theme ('dark' or 'light') |
+| `accentColor` | string | '#00FF99' | UI accent color |
 
 ### Methods
 
@@ -175,7 +181,7 @@ await editor.loadImage('path/to/image.jpg');
 // Export as data URL
 const dataURL = editor.getImageData('png', 1.0);
 
-// Download export
+// Download export (format: 'png', 'jpeg', or 'webp')
 editor.export('png', 1.0);
 ```
 
@@ -198,6 +204,15 @@ editor.applyFilter('blur', { radius: 5 });
 editor.applyFilter('grayscale');
 ```
 
+#### Theming
+```javascript
+// Change theme at runtime
+editor.setTheme('light');  // or 'dark'
+
+// Change accent color at runtime
+editor.setAccentColor('#FF6B6B');
+```
+
 #### Events
 ```javascript
 editor.on('ready', () => { });
@@ -208,6 +223,7 @@ editor.on('history:push', (data) => { });
 
 ### Available Events
 - `ready` - Editor initialized
+- `change` - Theme or accent color changed
 - `tool:select` - Tool changed
 - `tool:start` - Tool action started
 - `tool:end` - Tool action ended
@@ -220,6 +236,28 @@ editor.on('history:push', (data) => { });
 - `canvas:zoom` - Zoom changed
 - `color:foreground` - Foreground color changed
 - `color:background` - Background color changed
+
+## UI Overview
+
+### Header Bar
+- **Load** - Open image file
+- **Download** - Export with format selection (PNG/JPEG/WebP)
+- **Undo/Redo** - History navigation
+- **History** - Toggle history panel
+- **Layers** - Toggle layers panel
+- **Reset** - Reset canvas
+- **Center** - Fit canvas to screen
+- **Fullscreen** - Toggle fullscreen mode
+
+### Menu Bar (Bottom)
+- **Crop** - Crop with aspect ratio presets
+- **Rotate** - Rotate canvas by angle
+- **Flip** - Flip horizontal/vertical
+- **Resize** - Resize canvas dimensions
+- **Draw** - Brush tool with size and color
+- **Shape** - Draw shapes (rectangle, ellipse, line)
+- **Text** - Add and style text
+- **Filter** - Apply image filters
 
 ## Development
 
