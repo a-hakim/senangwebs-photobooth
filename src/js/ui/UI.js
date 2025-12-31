@@ -1142,9 +1142,29 @@ export class UI {
   }
 
   bindEvents() {
-    this.app.events.on(Events.HISTORY_PUSH, () => this.updateHistoryButtons());
-    this.app.events.on(Events.HISTORY_UNDO, () => this.updateHistoryButtons());
-    this.app.events.on(Events.HISTORY_REDO, () => this.updateHistoryButtons());
+    // History events - update buttons and panel
+    this.app.events.on(Events.HISTORY_PUSH, () => {
+      this.updateHistoryButtons();
+      this.updateHistoryPanel();
+    });
+    this.app.events.on(Events.HISTORY_UNDO, () => {
+      this.updateHistoryButtons();
+      this.updateHistoryPanel();
+    });
+    this.app.events.on(Events.HISTORY_REDO, () => {
+      this.updateHistoryButtons();
+      this.updateHistoryPanel();
+    });
+
+    // Layer events - update layers panel
+    this.app.events.on(Events.LAYER_ADD, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_REMOVE, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_SELECT, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_VISIBILITY, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_UPDATE, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_RENAME, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_REORDER, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_OPACITY, () => this.updateLayersPanel());
   }
 
   updateHistoryButtons() {
@@ -1159,13 +1179,24 @@ export class UI {
     }
   }
 
-  // Keep this method for compatibility
+  // Update layers panel if it's currently visible
   updateLayersPanel() {
-    // No-op in simplified UI
+    if (this.currentPanel === 'layers') {
+      const content = this.container.querySelector('.swp-side-panel-content');
+      if (content) {
+        this.renderLayersSidePanel(content);
+      }
+    }
   }
 
+  // Update history panel if it's currently visible
   updateHistoryPanel() {
-    // No-op in simplified UI
+    if (this.currentPanel === 'history') {
+      const content = this.container.querySelector('.swp-side-panel-content');
+      if (content) {
+        this.renderHistorySidePanel(content);
+      }
+    }
   }
 
   updateToolbox() {
