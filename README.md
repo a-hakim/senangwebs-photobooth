@@ -1,6 +1,6 @@
 # SenangWebs Photobooth
 
-A professional browser-based image editor with layers, tools, filters, and Photoshop-like features.
+A browser-based image editor featuring layers, drawing tools, and filters.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![Built with SenangStart Icons](https://img.shields.io/badge/Built%20with-SenangStart%20Icons-2563EB.svg)](https://github.com/bookklik-technologies/senangstart-icons)
