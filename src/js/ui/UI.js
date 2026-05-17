@@ -225,6 +225,8 @@ export class UI {
 
     this.currentMenu = menu;
 
+    this.closeSidePanel();
+
     // Update active state
     this.swpRoot.querySelectorAll('.swp-menu-item').forEach(item => {
       item.classList.toggle('active', item.dataset.menu === menu);
@@ -288,6 +290,7 @@ export class UI {
   }
 
   closeSubmenu() {
+    this.app.filters.cancelPreview();
     this.currentMenu = null;
     this.swpRoot.querySelectorAll('.swp-menu-item').forEach(item => {
       item.classList.remove('active');

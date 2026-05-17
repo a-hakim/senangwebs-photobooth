@@ -354,23 +354,23 @@ export class MoveTool extends BaseTool {
    */
   isLayerEmpty(layer) {
     if (!layer || !layer.canvas || !layer.ctx) return true;
-    
-    // Sample pixels to check if layer has any content
-    // For performance, we check a grid of points rather than every pixel
+
+    const imageData = layer.ctx.getImageData(0, 0, layer.width, layer.height);
+    const data = imageData.data;
     const sampleSize = 20;
     const stepX = Math.max(1, Math.floor(layer.width / sampleSize));
     const stepY = Math.max(1, Math.floor(layer.height / sampleSize));
-    
+
     for (let y = 0; y < layer.height; y += stepY) {
       for (let x = 0; x < layer.width; x += stepX) {
-        const pixel = layer.ctx.getImageData(x, y, 1, 1).data;
-        if (pixel[3] > 0) {
-          return false; // Found non-transparent pixel
+        const idx = (y * layer.width + x) * 4;
+        if (idx + 3 < data.length && data[idx + 3] > 0) {
+          return false;
         }
       }
     }
-    
-    return true; // No visible content found
+
+    return true;
   }
 
   renderOverlay(ctx) {

@@ -29,8 +29,8 @@ export class EraserTool extends BaseTool {
     super.onPointerDown(e);
     
     const layer = this.app.layers.getActiveLayer();
-    if (!layer || layer.locked) return;
-    
+    if (!layer || layer.locked || !layer.ctx) return;
+
     this.points = [this.startPoint];
     this.eraseAt(layer.ctx, this.startPoint);
     this.app.canvas.scheduleRender();
@@ -42,8 +42,8 @@ export class EraserTool extends BaseTool {
     if (!this.isDrawing) return;
     
     const layer = this.app.layers.getActiveLayer();
-    if (!layer || layer.locked) return;
-    
+    if (!layer || layer.locked || !layer.ctx) return;
+
     this.points.push(this.currentPoint);
     
     // Interpolate between points

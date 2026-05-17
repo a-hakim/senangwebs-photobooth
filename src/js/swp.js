@@ -119,7 +119,8 @@ class SWP {
   }
 
   getImageData(format = 'png', quality = 1) {
-    return this.canvas.toDataURL(`image/${format}`, quality);
+    const mimeType = format.startsWith('image/') ? format : `image/${format}`;
+    return this.canvas.toDataURL(mimeType, quality);
   }
 
   export(format = 'png', quality = 1) {
@@ -314,10 +315,12 @@ if (typeof window !== 'undefined') {
   // Auto-init on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      SWP.instances = SWP.autoInit();
+      const newInstances = SWP.autoInit();
+      SWP.instances.push(...newInstances);
     });
   } else {
     // DOM already loaded
-    SWP.instances = SWP.autoInit();
+    const newInstances = SWP.autoInit();
+    SWP.instances.push(...newInstances);
   }
 }

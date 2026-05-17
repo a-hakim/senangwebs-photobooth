@@ -65,7 +65,7 @@ export class ShapeTool extends BaseTool {
       } else {
         // Draw directly on current layer
         const layer = this.app.layers.getActiveLayer();
-        if (layer && !layer.locked) {
+        if (layer && !layer.locked && layer.ctx) {
           this.drawShape(layer.ctx, shape);
         }
       }

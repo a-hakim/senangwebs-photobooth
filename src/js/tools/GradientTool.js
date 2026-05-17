@@ -26,7 +26,7 @@ export class GradientTool extends BaseTool {
   onPointerUp(e) {
     if (this.isDrawing && this.startPoint && this.currentPoint) {
       const layer = this.app.layers.getActiveLayer();
-      if (layer && !layer.locked) {
+      if (layer && !layer.locked && layer.ctx) {
         this.drawGradient(layer.ctx, this.startPoint, this.currentPoint);
         this.app.history.pushState('Gradient');
         this.app.canvas.scheduleRender();

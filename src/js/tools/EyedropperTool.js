@@ -85,31 +85,31 @@ export class EyedropperTool extends BaseTool {
     
     const sampleSize = this.getSampleSize();
     const halfSize = Math.floor(sampleSize / 2);
-    
-    // Get average color in sample area
+
+    const sx = Math.max(0, x - halfSize);
+    const sy = Math.max(0, y - halfSize);
+    const sw = Math.min(sampleSize, this.app.canvas.width - sx);
+    const sh = Math.min(sampleSize, this.app.canvas.height - sy);
+
+    if (sw <= 0 || sh <= 0) return null;
+
+    const region = ctx.getImageData(sx, sy, sw, sh);
+    const data = region.data;
     let r = 0, g = 0, b = 0, count = 0;
-    
-    for (let sy = -halfSize; sy <= halfSize; sy++) {
-      for (let sx = -halfSize; sx <= halfSize; sx++) {
-        const px = x + sx;
-        const py = y + sy;
-        
-        if (px >= 0 && px < this.app.canvas.width && py >= 0 && py < this.app.canvas.height) {
-          const pixel = ctx.getImageData(px, py, 1, 1).data;
-          r += pixel[0];
-          g += pixel[1];
-          b += pixel[2];
-          count++;
-        }
-      }
+
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count++;
     }
-    
+
     if (count === 0) return null;
-    
+
     r = Math.round(r / count);
     g = Math.round(g / count);
     b = Math.round(b / count);
-    
+
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 

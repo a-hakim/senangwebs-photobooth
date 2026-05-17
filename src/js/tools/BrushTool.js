@@ -92,8 +92,8 @@ export class BrushTool extends BaseTool {
     super.onPointerDown(e);
     
     const layer = this.app.layers.getActiveLayer();
-    if (!layer || layer.locked) return;
-    
+    if (!layer || layer.locked || !layer.ctx) return;
+
     this.points = [{ ...this.startPoint, pressure: this.getPressure(e) }];
     
     // Draw initial point
@@ -107,8 +107,8 @@ export class BrushTool extends BaseTool {
     if (!this.isDrawing) return;
     
     const layer = this.app.layers.getActiveLayer();
-    if (!layer || layer.locked) return;
-    
+    if (!layer || layer.locked || !layer.ctx) return;
+
     const point = { ...this.currentPoint, pressure: this.getPressure(e) };
     this.points.push(point);
     
@@ -222,33 +222,35 @@ export class BrushTool extends BaseTool {
   }
 
   updateCursor() {
-    // Custom cursor showing brush size
-    const size = Math.max(4, this.options.size * (this.app.canvas?.zoom || 100) / 100);
-    
+    const size = Math.max(4, Math.round(this.options.size * (this.app.canvas?.zoom || 100) / 100));
+
     if (size > 4) {
-      const canvas = document.createElement('canvas');
-      canvas.width = size + 2;
-      canvas.height = size + 2;
-      const ctx = canvas.getContext('2d');
-      
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(size / 2 + 1, size / 2 + 1, size / 2, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      ctx.strokeStyle = '#ffffff';
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.arc(size / 2 + 1, size / 2 + 1, size / 2, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      const dataURL = canvas.toDataURL();
-      this.cursor = `url(${dataURL}) ${size / 2 + 1} ${size / 2 + 1}, crosshair`;
+      if (!this._cursorCache || this._cursorCachedSize !== size) {
+        this._cursorCache = document.createElement('canvas');
+        this._cursorCache.width = size + 2;
+        this._cursorCache.height = size + 2;
+        const ctx = this._cursorCache.getContext('2d');
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(size / 2 + 1, size / 2 + 1, size / 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.arc(size / 2 + 1, size / 2 + 1, size / 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        this._cursorCachedSize = size;
+        this._cursorDataURL = this._cursorCache.toDataURL();
+      }
+      this.cursor = `url(${this._cursorDataURL}) ${size / 2 + 1} ${size / 2 + 1}, crosshair`;
     } else {
       this.cursor = 'crosshair';
     }
-    
+
     if (this.isActive && this.app.canvas?.displayCanvas) {
       this.app.canvas.displayCanvas.style.cursor = this.cursor;
     }

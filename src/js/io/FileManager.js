@@ -42,12 +42,28 @@ export class FileManager {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*,.sws';
-    
+
     return new Promise((resolve) => {
+      let resolved = false;
+      const cleanup = () => {
+        window.removeEventListener('focus', onFocus);
+        if (input.parentNode) input.remove();
+      };
+      const onFocus = () => {
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            resolve(null);
+          }
+        }, 300);
+      };
       input.onchange = async (e) => {
+        resolved = true;
+        cleanup();
         const file = e.target.files[0];
         if (!file) return resolve(null);
-        
+
         if (file.name.endsWith('.sws')) {
           await this.openProject(file);
         } else {
@@ -55,6 +71,7 @@ export class FileManager {
         }
         resolve(file);
       };
+      window.addEventListener('focus', onFocus, { once: true });
       input.click();
     });
   }
@@ -83,11 +100,25 @@ export class FileManager {
 
   async openProject(file) {
     const text = await file.text();
-    const project = JSON.parse(text);
-    
+    let project;
+    try {
+      project = JSON.parse(text);
+    } catch (e) {
+      console.error('SWP: Failed to parse project file', e);
+      throw new Error('Invalid project file: malformed JSON');
+    }
+
+    if (!project || typeof project.width !== 'number' || typeof project.height !== 'number'
+        || project.width <= 0 || project.height <= 0) {
+      throw new Error('Invalid project: missing or invalid canvas dimensions');
+    }
+    if (!Array.isArray(project.layers)) {
+      throw new Error('Invalid project: missing layers array');
+    }
+
     this.app.canvas.resize(project.width, project.height);
     await this.app.layers.fromJSON(project.layers);
-    
+
     this.projectName = project.name || file.name.replace('.sws', '');
     this.hasUnsavedChanges = false;
     this.app.history.init();
@@ -123,7 +154,8 @@ export class FileManager {
   }
 
   async export(format = 'png', quality = 1) {
-    const dataURL = this.app.canvas.toDataURL(`image/${format}`, quality);
+    const mimeType = format.startsWith('image/') ? format : `image/${format}`;
+    const dataURL = this.app.canvas.toDataURL(mimeType, quality);
     const link = document.createElement('a');
     link.download = `${this.projectName}.${format}`;
     link.href = dataURL;

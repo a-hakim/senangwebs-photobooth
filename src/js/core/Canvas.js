@@ -186,7 +186,7 @@ export class Canvas {
     this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
 
     // Adjust pan to zoom toward point
-    if (centerX !== null && centerY !== null) {
+    if (centerX !== null && centerY !== null && oldZoom > 0) {
       const scale = this.zoom / oldZoom;
       this.panX = centerX - (centerX - this.panX) * scale;
       this.panY = centerY - (centerY - this.panY) * scale;
@@ -221,6 +221,8 @@ export class Canvas {
     const padding = 40;
     const viewportWidth = this.displayCanvas.width - padding * 2;
     const viewportHeight = this.displayCanvas.height - padding * 2;
+
+    if (!this.width || !this.height || viewportWidth <= 0 || viewportHeight <= 0) return;
 
     const scaleX = viewportWidth / this.width;
     const scaleY = viewportHeight / this.height;
@@ -347,17 +349,19 @@ export class Canvas {
     this.overlayCtx.translate(this.panX, this.panY);
     this.overlayCtx.scale(scale, scale);
 
-    // Draw selection if any
     if (this.app.selection) {
       this.app.selection.render(this.overlayCtx);
     }
 
-    // Draw tool overlay
     if (this.app.tools?.currentTool) {
       this.app.tools.currentTool.renderOverlay(this.overlayCtx);
     }
 
     this.overlayCtx.restore();
+  }
+
+  renderOverlayOnly() {
+    this.renderOverlay();
   }
 
   /**

@@ -138,7 +138,7 @@ export class Selection {
     this.stopMarchingAnts();
     const animate = () => {
       this.marchingAntsOffset = (this.marchingAntsOffset + 0.5) % 10;
-      this.app.canvas.scheduleRender();
+      this.app.canvas.renderOverlayOnly();
     };
     this.animationId = setInterval(animate, 60);
   }

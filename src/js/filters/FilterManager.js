@@ -97,7 +97,9 @@ export class FilterManager {
 
   adjustContrast(imageData, value) {
     const data = imageData.data;
-    const factor = (259 * (value + 255)) / (255 * (259 - value));
+    const clampedValue = Math.max(0, Math.min(255, value));
+    const denom = 259 - clampedValue;
+    const factor = denom !== 0 ? (259 * (clampedValue + 255)) / (255 * denom) : 1;
     for (let i = 0; i < data.length; i += 4) {
       data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
       data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
@@ -149,33 +151,42 @@ export class FilterManager {
   }
 
   blur(imageData, radius) {
-    // Simple box blur
     const data = imageData.data;
     const width = imageData.width;
     const height = imageData.height;
-    const result = new Uint8ClampedArray(data);
-    
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        let r = 0, g = 0, b = 0, count = 0;
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const nx = x + dx, ny = y + dy;
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              const idx = (ny * width + nx) * 4;
-              r += data[idx]; g += data[idx + 1]; b += data[idx + 2];
-              count++;
-            }
-          }
+    const tempData = new Uint8ClampedArray(data.length);
+
+    this._boxBlurPass(data, tempData, width, height, radius, true);
+    this._boxBlurPass(tempData, data, width, height, radius, false);
+
+    return new ImageData(data, width, height);
+  }
+
+  _boxBlurPass(src, dst, width, height, radius, isHorizontal) {
+    const iarr = 1 / (2 * radius + 1);
+    for (let major = 0; major < (isHorizontal ? height : width); major++) {
+      for (let minor = 0; minor < (isHorizontal ? width : height); minor++) {
+        let r = 0, g = 0, b = 0;
+        for (let k = -radius; k <= radius; k++) {
+          const x = isHorizontal ? minor + k : major;
+          const y = isHorizontal ? major : minor + k;
+          const nx = isHorizontal ? Math.max(0, Math.min(width - 1, x)) : x;
+          const ny = isHorizontal ? y : Math.max(0, Math.min(height - 1, y));
+          const idx = (ny * width + nx) * 4;
+          r += src[idx];
+          g += src[idx + 1];
+          b += src[idx + 2];
         }
-        const idx = (y * width + x) * 4;
-        result[idx] = r / count;
-        result[idx + 1] = g / count;
-        result[idx + 2] = b / count;
+        const outY = isHorizontal ? major : minor;
+        const outX = isHorizontal ? minor : major;
+        const outIdx = (outY * width + outX) * 4;
+        const count = 2 * radius + 1;
+        dst[outIdx] = Math.round(r / count);
+        dst[outIdx + 1] = Math.round(g / count);
+        dst[outIdx + 2] = Math.round(b / count);
+        dst[outIdx + 3] = src[outIdx + 3];
       }
     }
-    
-    return new ImageData(result, width, height);
   }
 
   sharpen(imageData, amount) {
