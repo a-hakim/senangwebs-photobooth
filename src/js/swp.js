@@ -1,7 +1,7 @@
 /**
  * SenangWebs Photobooth (SWP)
  * Professional browser-based image editor
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import '../css/swp.css';
@@ -60,7 +60,8 @@ class SWP {
   init() {
     // Initialize UI
     this.ui.init(this.container);
-    
+    this._rootEl = this.ui.swpRoot;
+
     // Apply theme class
     this.applyTheme(this.options.theme);
     
@@ -96,9 +97,12 @@ class SWP {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
+        if (this.layers.count > 0 && this.layers.getLayers().some(l => l.canvas)) {
+          console.warn('SWP: Loading a new image will replace the current document. Use newDocument() if needed.');
+        }
         this.file.newDocument({ width: img.width, height: img.height });
         const layer = this.layers.getActiveLayer();
-        if (layer) {
+        if (layer && layer.ctx) {
           layer.ctx.drawImage(img, 0, 0);
           this.canvas.render();
           this.history.pushState('Load Image');
@@ -228,7 +232,12 @@ class SWP {
     this.keyboard.destroy();
     this.selection.destroy();
     this.canvas.destroy();
-    this.container.innerHTML = '';
+    if (this.ui && this.ui.destroy) {
+      this.ui.destroy();
+    }
+    if (this._rootEl && this._rootEl.parentNode) {
+      this._rootEl.remove();
+    }
   }
 }
 

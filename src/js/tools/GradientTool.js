@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Gradient Tool
  * Draw gradients
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -15,7 +15,7 @@ export class GradientTool extends BaseTool {
     this.shortcut = 'g';
     
     this.options = {
-      type: 'linear', // 'linear', 'radial', 'angle', 'diamond'
+      type: 'linear', // 'linear', 'radial', 'angle'
       opacity: 100,
       reverse: false,
       dither: false

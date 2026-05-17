@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - Fill Tool (Paint Bucket)
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -45,41 +45,54 @@ export class FillTool extends BaseTool {
     const data = imageData.data;
     const width = layer.width;
     const height = layer.height;
-    
+
     const startIdx = (startY * width + startX) * 4;
     const targetR = data[startIdx];
     const targetG = data[startIdx + 1];
     const targetB = data[startIdx + 2];
     const targetA = data[startIdx + 3];
-    
+
     const fillRGB = this.hexToRgb(fillColor);
     const fillA = Math.round((this.options.opacity / 100) * 255);
     const tolerance = this.options.tolerance;
-    const visited = new Uint8Array(width * height);
-    const stack = [[startX, startY]];
-    
-    while (stack.length > 0) {
-      const [x, y] = stack.pop();
-      const idx = y * width + x;
-      
-      if (x < 0 || x >= width || y < 0 || y >= height) continue;
-      if (visited[idx]) continue;
-      
-      const pixelIdx = idx * 4;
-      if (!this.colorsMatch(targetR, targetG, targetB, targetA, 
-          data[pixelIdx], data[pixelIdx + 1], data[pixelIdx + 2], data[pixelIdx + 3], tolerance)) {
-        continue;
+
+    if (this.options.contiguous) {
+      const visited = new Uint8Array(width * height);
+      const stack = [[startX, startY]];
+
+      while (stack.length > 0) {
+        const [x, y] = stack.pop();
+        const idx = y * width + x;
+
+        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+        if (visited[idx]) continue;
+
+        const pixelIdx = idx * 4;
+        if (!this.colorsMatch(targetR, targetG, targetB, targetA,
+            data[pixelIdx], data[pixelIdx + 1], data[pixelIdx + 2], data[pixelIdx + 3], tolerance)) {
+          continue;
+        }
+
+        visited[idx] = 1;
+        data[pixelIdx] = fillRGB.r;
+        data[pixelIdx + 1] = fillRGB.g;
+        data[pixelIdx + 2] = fillRGB.b;
+        data[pixelIdx + 3] = fillA;
+
+        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
       }
-      
-      visited[idx] = 1;
-      data[pixelIdx] = fillRGB.r;
-      data[pixelIdx + 1] = fillRGB.g;
-      data[pixelIdx + 2] = fillRGB.b;
-      data[pixelIdx + 3] = fillA;
-      
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    } else {
+      for (let i = 0; i < data.length; i += 4) {
+        if (this.colorsMatch(targetR, targetG, targetB, targetA,
+            data[i], data[i + 1], data[i + 2], data[i + 3], tolerance)) {
+          data[i] = fillRGB.r;
+          data[i + 1] = fillRGB.g;
+          data[i + 2] = fillRGB.b;
+          data[i + 3] = fillA;
+        }
+      }
     }
-    
+
     ctx.putImageData(imageData, 0, 0);
   }
 

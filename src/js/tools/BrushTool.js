@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Brush Tool
  * Freehand drawing with customizable brush
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -30,6 +30,10 @@ export class BrushTool extends BaseTool {
     this.points = [];
     this.brushCanvas = null;
     this.brushCtx = null;
+    this._colorBrushCanvas = null;
+    this._cachedColor = null;
+    this._cachedHardness = null;
+    this._cachedSize = null;
   }
 
   onActivate() {
@@ -174,28 +178,35 @@ export class BrushTool extends BaseTool {
    */
   drawBrushDab(ctx, x, y, size, color) {
     const halfSize = size / 2;
-    
-    // Use brush tip canvas for soft brushes
+
     if (this.options.hardness < 100) {
-      // Scale brush tip to current size
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
-      
-      // Create colored version of brush tip
-      const colorCanvas = document.createElement('canvas');
-      colorCanvas.width = this.brushCanvas.width;
-      colorCanvas.height = this.brushCanvas.height;
-      const colorCtx = colorCanvas.getContext('2d');
-      
-      colorCtx.fillStyle = color;
-      colorCtx.fillRect(0, 0, colorCanvas.width, colorCanvas.height);
-      colorCtx.globalCompositeOperation = 'destination-in';
-      colorCtx.drawImage(this.brushCanvas, 0, 0);
-      
-      ctx.drawImage(colorCanvas, x - halfSize, y - halfSize, size, size);
+
+      const cacheInvalid = !this._colorBrushCanvas
+        || this._cachedColor !== color
+        || this._cachedHardness !== this.options.hardness
+        || this._cachedSize !== this.options.size;
+
+      if (cacheInvalid) {
+        this._colorBrushCanvas = document.createElement('canvas');
+        this._colorBrushCanvas.width = this.brushCanvas.width;
+        this._colorBrushCanvas.height = this.brushCanvas.height;
+        const colorCtx = this._colorBrushCanvas.getContext('2d');
+
+        colorCtx.fillStyle = color;
+        colorCtx.fillRect(0, 0, this._colorBrushCanvas.width, this._colorBrushCanvas.height);
+        colorCtx.globalCompositeOperation = 'destination-in';
+        colorCtx.drawImage(this.brushCanvas, 0, 0);
+
+        this._cachedColor = color;
+        this._cachedHardness = this.options.hardness;
+        this._cachedSize = this.options.size;
+      }
+
+      ctx.drawImage(this._colorBrushCanvas, x - halfSize, y - halfSize, size, size);
       ctx.restore();
     } else {
-      // Hard brush - simple circle
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(x, y, halfSize, 0, Math.PI * 2);
@@ -206,6 +217,7 @@ export class BrushTool extends BaseTool {
   onOptionChange(key, value) {
     if (key === 'size' || key === 'hardness') {
       this.updateBrushTip();
+      this._cachedColor = null;
     }
   }
 

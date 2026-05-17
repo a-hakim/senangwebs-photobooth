@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Shape Tool
  * Draw geometric shapes
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { BaseTool } from './BaseTool.js';

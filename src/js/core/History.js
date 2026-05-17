@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - History Manager
  * Undo/redo system with state snapshots
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { Events } from './EventEmitter.js';
@@ -9,10 +9,11 @@ import { Events } from './EventEmitter.js';
 export class History {
   constructor(app, options = {}) {
     this.app = app;
-    this.maxStates = options.maxStates || 50;
+    this.maxStates = options.maxStates || 20;
     this.states = [];
     this.currentIndex = -1;
     this.isPerformingAction = false;
+    this._isRestoring = false;
   }
 
   /**
@@ -49,6 +50,7 @@ export class History {
     // Limit history size
     if (this.states.length > this.maxStates) {
       this.states.shift();
+      this.currentIndex--;
     } else {
       this.currentIndex++;
     }
@@ -93,19 +95,17 @@ export class History {
    * @param {Object} snapshot - State to restore
    */
   async restoreState(snapshot) {
+    if (this._isRestoring) return;
+    this._isRestoring = true;
     this.isPerformingAction = true;
 
     try {
-      // Clear existing layers
       this.app.layers.clear();
-
-      // Restore canvas dimensions
       this.app.canvas.resize(snapshot.canvasWidth, snapshot.canvasHeight);
       this.app.canvas.zoom = snapshot.zoom;
       this.app.canvas.panX = snapshot.panX;
       this.app.canvas.panY = snapshot.panY;
 
-      // Restore layers
       for (const layerData of snapshot.layers) {
         const layer = await this.app.layers.addLayer({
           id: layerData.id,
@@ -118,22 +118,20 @@ export class History {
           position: layerData.position
         });
 
-        // Restore image data
         if (layerData.imageData) {
           await layer.loadFromDataURL(layerData.imageData);
         }
       }
 
-      // Restore active layer
       if (snapshot.activeLayerId) {
         this.app.layers.setActiveLayer(snapshot.activeLayerId);
       }
 
-      // Re-render
       this.app.canvas.render();
 
     } finally {
       this.isPerformingAction = false;
+      this._isRestoring = false;
     }
   }
 

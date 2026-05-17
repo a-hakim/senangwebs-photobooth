@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Layer
  * Individual layer class
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -342,7 +342,7 @@ export class Layer {
       textContent: this.textContent,
       textStyle: { ...this.textStyle },
       shapeType: this.shapeType,
-      shapeData: this.shapeData ? { ...this.shapeData } : null,
+      shapeData: this.shapeData ? JSON.parse(JSON.stringify(this.shapeData)) : null,
       fillColor: this.fillColor,
       strokeColor: this.strokeColor,
       strokeWidth: this.strokeWidth,

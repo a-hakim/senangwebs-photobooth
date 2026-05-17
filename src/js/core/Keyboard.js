@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Keyboard Manager
  * Keyboard shortcuts and hotkey management
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 export class Keyboard {
@@ -17,6 +17,10 @@ export class Keyboard {
     };
     this.spacePressed = false;
 
+    this._boundKeyDown = null;
+    this._boundKeyUp = null;
+    this._boundResetModifiers = null;
+
     this.init();
   }
 
@@ -26,9 +30,13 @@ export class Keyboard {
   init() {
     this.registerDefaultShortcuts();
 
-    document.addEventListener('keydown', this.handleKeyDown.bind(this));
-    document.addEventListener('keyup', this.handleKeyUp.bind(this));
-    window.addEventListener('blur', this.resetModifiers.bind(this));
+    this._boundKeyDown = this.handleKeyDown.bind(this);
+    this._boundKeyUp = this.handleKeyUp.bind(this);
+    this._boundResetModifiers = this.resetModifiers.bind(this);
+
+    document.addEventListener('keydown', this._boundKeyDown);
+    document.addEventListener('keyup', this._boundKeyUp);
+    window.addEventListener('blur', this._boundResetModifiers);
   }
 
   /**
@@ -38,8 +46,6 @@ export class Keyboard {
     // Tool shortcuts
     this.register('v', () => this.app.tools.setTool('move'));
     this.register('m', () => this.app.tools.setTool('marquee'));
-    this.register('l', () => this.app.tools.setTool('lasso'));
-    this.register('w', () => this.app.tools.setTool('magicWand'));
     this.register('b', () => this.app.tools.setTool('brush'));
     this.register('e', () => this.app.tools.setTool('eraser'));
     this.register('g', () => this.app.tools.setTool('gradient'));
@@ -48,7 +54,6 @@ export class Keyboard {
     this.register('i', () => this.app.tools.setTool('eyedropper'));
     this.register('z', () => this.app.tools.setTool('zoom'));
     this.register('h', () => this.app.tools.setTool('hand'));
-    this.register('s', () => this.app.tools.setTool('cloneStamp'));
     this.register('c', () => this.app.tools.setTool('crop'));
 
     // File operations
@@ -90,8 +95,8 @@ export class Keyboard {
     // Layer operations
     this.register('ctrl+shift+n', () => this.app.layers.addLayer());
     this.register('ctrl+j', () => this.app.layers.duplicateLayer());
-    this.register('ctrl+shift+e', () => this.app.layers.mergeVisible());
-    this.register('ctrl+e', () => this.app.layers.mergeDown());
+    this.register('ctrl+shift+m', () => this.app.layers.mergeDown());
+    this.register('ctrl+shift+v', () => this.app.layers.mergeVisible());
 
     // Color
     this.register('x', () => this.app.colors.swap());
@@ -313,9 +318,18 @@ export class Keyboard {
    * Destroy keyboard manager
    */
   destroy() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('keyup', this.handleKeyUp);
-    window.removeEventListener('blur', this.resetModifiers);
+    if (this._boundKeyDown) {
+      document.removeEventListener('keydown', this._boundKeyDown);
+      this._boundKeyDown = null;
+    }
+    if (this._boundKeyUp) {
+      document.removeEventListener('keyup', this._boundKeyUp);
+      this._boundKeyUp = null;
+    }
+    if (this._boundResetModifiers) {
+      window.removeEventListener('blur', this._boundResetModifiers);
+      this._boundResetModifiers = null;
+    }
     this.shortcuts.clear();
   }
 }

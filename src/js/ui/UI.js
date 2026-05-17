@@ -1,7 +1,7 @@
 /**
  * SenangWebs Photobooth - UI Manager
  * TOAST UI-Inspired Simple Layout
- * @version 3.0.0
+ * @version 2.0.2
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -18,12 +18,15 @@ export class UI {
   init(container) {
     this.container = container;
     this.container.classList.add('swp-app');
+    this._handlers = {};
     this.createLayout();
     this.bindEvents();
   }
 
   createLayout() {
-    this.container.innerHTML = `
+    this.swpRoot = document.createElement('div');
+    this.swpRoot.className = 'swp-root';
+    this.swpRoot.innerHTML = `
       <!-- Header Bar -->
       <div class="swp-header">
         <div class="swp-header-left">
@@ -126,13 +129,15 @@ export class UI {
       </div>
     `;
 
+    this.container.appendChild(this.swpRoot);
+
     this.bindHeaderActions();
     this.bindMenuActions();
   }
 
   bindHeaderActions() {
-    const header = this.container.querySelector('.swp-header');
-    const sidePanel = this.container.querySelector('.swp-side-panel');
+    const header = this.swpRoot.querySelector('.swp-header');
+    const sidePanel = this.swpRoot.querySelector('.swp-side-panel');
     
     // Close panel button
     sidePanel?.querySelector('[data-action="close-panel"]')?.addEventListener('click', () => {
@@ -140,7 +145,7 @@ export class UI {
     });
     
     // Download dropdown handling
-    const downloadDropdown = this.container.querySelector('.swp-download-dropdown');
+    const downloadDropdown = this.swpRoot.querySelector('.swp-download-dropdown');
     const dropdownMenu = downloadDropdown?.querySelector('.swp-dropdown-menu');
     
     // Format selection
@@ -200,7 +205,7 @@ export class UI {
   }
 
   bindMenuActions() {
-    const menuBar = this.container.querySelector('.swp-menu-bar');
+    const menuBar = this.swpRoot.querySelector('.swp-menu-bar');
     
     menuBar.addEventListener('click', (e) => {
       const menuItem = e.target.closest('.swp-menu-item');
@@ -221,7 +226,7 @@ export class UI {
     this.currentMenu = menu;
 
     // Update active state
-    this.container.querySelectorAll('.swp-menu-item').forEach(item => {
+    this.swpRoot.querySelectorAll('.swp-menu-item').forEach(item => {
       item.classList.toggle('active', item.dataset.menu === menu);
     });
 
@@ -251,7 +256,7 @@ export class UI {
   }
 
   showSubmenu(menu) {
-    const submenu = this.container.querySelector('.swp-submenu');
+    const submenu = this.swpRoot.querySelector('.swp-submenu');
     submenu.hidden = false;
 
     switch (menu) {
@@ -284,10 +289,10 @@ export class UI {
 
   closeSubmenu() {
     this.currentMenu = null;
-    this.container.querySelectorAll('.swp-menu-item').forEach(item => {
+    this.swpRoot.querySelectorAll('.swp-menu-item').forEach(item => {
       item.classList.remove('active');
     });
-    const submenu = this.container.querySelector('.swp-submenu');
+    const submenu = this.swpRoot.querySelector('.swp-submenu');
     submenu.hidden = true;
     submenu.innerHTML = '';
     
@@ -538,7 +543,7 @@ export class UI {
   renderDrawSubmenu(submenu) {
     const currentColor = this.app.colors.foreground;
     const brushTool = this.app.tools.getTool('brush');
-    const currentSize = brushTool?.size || 10;
+    const currentSize = brushTool?.options?.size || 10;
 
     submenu.innerHTML = `
       <div class="swp-submenu-content">
@@ -570,7 +575,7 @@ export class UI {
       sizeValue.textContent = `${size}px`;
       const brushTool = this.app.tools.getTool('brush');
       if (brushTool) {
-        brushTool.size = size;
+        brushTool.setOption('size', size);
       }
     });
 
@@ -712,7 +717,7 @@ export class UI {
       sizeValue.textContent = `${size}px`;
       const textTool = this.app.tools.getTool('text');
       if (textTool) {
-        textTool.fontSize = size;
+        textTool.setOption('fontSize', size);
       }
     });
 
@@ -720,7 +725,7 @@ export class UI {
     fontSelect?.addEventListener('change', (e) => {
       const textTool = this.app.tools.getTool('text');
       if (textTool) {
-        textTool.fontFamily = e.target.value;
+        textTool.setOption('fontFamily', e.target.value);
       }
     });
 
@@ -735,9 +740,9 @@ export class UI {
         const textTool = this.app.tools.getTool('text');
         if (textTool) {
           if (btn.dataset.style === 'bold') {
-            textTool.bold = btn.classList.contains('active');
+            textTool.setOption('fontWeight', btn.classList.contains('active') ? 'bold' : 'normal');
           } else if (btn.dataset.style === 'italic') {
-            textTool.italic = btn.classList.contains('active');
+            textTool.setOption('fontStyle', btn.classList.contains('active') ? 'italic' : 'normal');
           }
         }
       });
@@ -849,64 +854,72 @@ export class UI {
 
   // Canvas manipulation methods
   rotateCanvas(angle) {
-    const layer = this.app.layers.getActiveLayer();
-    if (!layer) return;
+    const layers = this.app.layers.getLayers();
+    if (layers.length === 0) return;
 
-    // Save history
     this.app.history.pushState(`Rotate ${angle}°`);
 
-    // Perform rotation
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    
     const rad = (angle * Math.PI) / 180;
     const sin = Math.abs(Math.sin(rad));
     const cos = Math.abs(Math.cos(rad));
-    
-    const w = layer.width;
-    const h = layer.height;
-    const newW = Math.round(w * cos + h * sin);
-    const newH = Math.round(w * sin + h * cos);
 
-    tempCanvas.width = newW;
-    tempCanvas.height = newH;
-    
-    tempCtx.translate(newW / 2, newH / 2);
-    tempCtx.rotate(rad);
-    tempCtx.drawImage(layer.canvas, -w / 2, -h / 2);
+    for (const layer of layers) {
+      if (!layer.canvas || !layer.ctx) continue;
 
-    // Update canvas size if needed (for 90° rotations)
-    if (angle === 90 || angle === -90) {
-      this.app.canvas.resize(newH, newW);
+      const w = layer.width;
+      const h = layer.height;
+      const newW = Math.round(w * cos + h * sin);
+      const newH = Math.round(w * sin + h * cos);
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = newW;
+      tempCanvas.height = newH;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.translate(newW / 2, newH / 2);
+      tempCtx.rotate(rad);
+      tempCtx.drawImage(layer.canvas, -w / 2, -h / 2);
+
+      layer.clear();
+      layer.canvas.width = newW;
+      layer.canvas.height = newH;
+      layer.width = newW;
+      layer.height = newH;
+      layer.ctx.drawImage(tempCanvas, 0, 0);
     }
 
-    layer.clear();
-    layer.ctx.drawImage(tempCanvas, 0, 0);
+    if (angle === 90 || angle === -90) {
+      this.app.canvas.resize(this.app.canvas.height, this.app.canvas.width);
+    }
     this.app.canvas.render();
   }
 
   flipCanvas(direction) {
-    const layer = this.app.layers.getActiveLayer();
-    if (!layer) return;
+    const layers = this.app.layers.getLayers();
+    if (layers.length === 0) return;
 
     this.app.history.pushState(`Flip ${direction}`);
 
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCanvas.width = layer.width;
-    tempCanvas.height = layer.height;
+    for (const layer of layers) {
+      if (!layer.canvas || !layer.ctx) continue;
 
-    if (direction === 'horizontal') {
-      tempCtx.translate(layer.width, 0);
-      tempCtx.scale(-1, 1);
-    } else {
-      tempCtx.translate(0, layer.height);
-      tempCtx.scale(1, -1);
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = layer.width;
+      tempCanvas.height = layer.height;
+
+      if (direction === 'horizontal') {
+        tempCtx.translate(layer.width, 0);
+        tempCtx.scale(-1, 1);
+      } else {
+        tempCtx.translate(0, layer.height);
+        tempCtx.scale(1, -1);
+      }
+
+      tempCtx.drawImage(layer.canvas, 0, 0);
+      layer.clear();
+      layer.ctx.drawImage(tempCanvas, 0, 0);
     }
 
-    tempCtx.drawImage(layer.canvas, 0, 0);
-    layer.clear();
-    layer.ctx.drawImage(tempCanvas, 0, 0);
     this.app.canvas.render();
   }
 
@@ -973,13 +986,11 @@ export class UI {
   }
 
   resetCanvas() {
-    if (confirm('Reset all changes?')) {
-      this.app.file.newDocument({
-        width: this.app.options.width,
-        height: this.app.options.height
-      });
-      this.closeSubmenu();
-    }
+    this.app.file.newDocument({
+      width: this.app.options.width,
+      height: this.app.options.height
+    });
+    this.closeSubmenu();
   }
 
   openFileDialog() {
@@ -1011,7 +1022,7 @@ export class UI {
 
   // Side Panel Methods
   toggleSidePanel(panelType) {
-    const sidePanel = this.container.querySelector('.swp-side-panel');
+    const sidePanel = this.swpRoot.querySelector('.swp-side-panel');
     if (!sidePanel) return;
 
     // If already showing this panel, close it
@@ -1039,20 +1050,20 @@ export class UI {
     }
 
     // Update button active states
-    this.container.querySelectorAll('[data-action="history"], [data-action="layers"]').forEach(btn => {
+    this.swpRoot.querySelectorAll('[data-action="history"], [data-action="layers"]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.action === panelType);
     });
   }
 
   closeSidePanel() {
-    const sidePanel = this.container.querySelector('.swp-side-panel');
+    const sidePanel = this.swpRoot.querySelector('.swp-side-panel');
     if (sidePanel) {
       sidePanel.hidden = true;
     }
     this.currentPanel = null;
 
     // Remove active states
-    this.container.querySelectorAll('[data-action="history"], [data-action="layers"]').forEach(btn => {
+    this.swpRoot.querySelectorAll('[data-action="history"], [data-action="layers"]').forEach(btn => {
       btn.classList.remove('active');
     });
   }
@@ -1168,8 +1179,8 @@ export class UI {
   }
 
   updateHistoryButtons() {
-    const undoBtn = this.container.querySelector('[data-action="undo"]');
-    const redoBtn = this.container.querySelector('[data-action="redo"]');
+    const undoBtn = this.swpRoot.querySelector('[data-action="undo"]');
+    const redoBtn = this.swpRoot.querySelector('[data-action="redo"]');
     
     if (undoBtn) {
       undoBtn.disabled = !this.app.history.canUndo();
@@ -1182,7 +1193,7 @@ export class UI {
   // Update layers panel if it's currently visible
   updateLayersPanel() {
     if (this.currentPanel === 'layers') {
-      const content = this.container.querySelector('.swp-side-panel-content');
+      const content = this.swpRoot.querySelector('.swp-side-panel-content');
       if (content) {
         this.renderLayersSidePanel(content);
       }
@@ -1192,7 +1203,7 @@ export class UI {
   // Update history panel if it's currently visible
   updateHistoryPanel() {
     if (this.currentPanel === 'history') {
-      const content = this.container.querySelector('.swp-side-panel-content');
+      const content = this.swpRoot.querySelector('.swp-side-panel-content');
       if (content) {
         this.renderHistorySidePanel(content);
       }
@@ -1204,7 +1215,16 @@ export class UI {
   }
 
   getWorkspace() {
-    return this.container.querySelector('.swp-workspace');
+    return this.swpRoot.querySelector('.swp-workspace');
+  }
+
+  destroy() {
+    if (this.swpRoot && this.swpRoot.parentNode) {
+      this.swpRoot.remove();
+      this.swpRoot = null;
+    }
+    this.container.classList.remove('swp-app');
+    this.container = null;
   }
 }
 

@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - File Manager
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -98,7 +98,7 @@ export class FileManager {
   async save() {
     const project = {
       name: this.projectName,
-      version: '2.0.0',
+      version: '2.0.2',
       width: this.app.canvas.width,
       height: this.app.canvas.height,
       layers: this.app.layers.toJSON()
@@ -111,12 +111,15 @@ export class FileManager {
     this.app.events.emit(Events.DOCUMENT_SAVE, { name: this.projectName });
   }
 
-  async saveAs() {
-    const name = prompt('Project name:', this.projectName);
-    if (name) {
-      this.projectName = name;
-      await this.save();
+  setProjectName(name) {
+    if (name && name.trim()) {
+      this.projectName = name.trim();
     }
+  }
+
+  async saveAs() {
+    this.projectName = `${this.projectName}_${Date.now()}`;
+    await this.save();
   }
 
   async export(format = 'png', quality = 1) {
@@ -125,16 +128,12 @@ export class FileManager {
     link.download = `${this.projectName}.${format}`;
     link.href = dataURL;
     link.click();
-    
+
     this.app.events.emit(Events.DOCUMENT_EXPORT, { format, name: this.projectName });
   }
 
   async exportAs() {
-    const format = prompt('Format (png, jpeg, webp):', 'png');
-    if (format && ['png', 'jpeg', 'webp'].includes(format)) {
-      const quality = format === 'png' ? 1 : parseFloat(prompt('Quality (0.1-1.0):', '0.9')) || 0.9;
-      await this.export(format, quality);
-    }
+    await this.export('png', 1);
   }
 
   downloadBlob(blob, filename) {

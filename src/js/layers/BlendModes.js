@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Blend Modes
  * Custom blend mode implementations for pixel-level operations
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 /**

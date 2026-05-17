@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Base Tool
  * Abstract base class for all tools
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { Events } from '../core/EventEmitter.js';

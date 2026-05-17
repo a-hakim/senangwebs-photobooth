@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - Selection System
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -14,6 +14,7 @@ export class Selection {
     this.feather = 0;
     this.marchingAntsOffset = 0;
     this.animationId = null;
+    this._invertMask = null;
   }
 
   hasSelection() {
@@ -51,6 +52,7 @@ export class Selection {
   clear() {
     this.path = null;
     this.bounds = null;
+    this._invertMask = null;
     this.stopMarchingAnts();
     this.app.events.emit(Events.SELECTION_CLEAR);
     this.app.canvas.scheduleRender();
@@ -65,12 +67,59 @@ export class Selection {
   }
 
   invert() {
-    // TODO: Implement selection inversion
+    if (!this.hasSelection()) {
+      this.selectAll();
+      return;
+    }
+
+    this._buildInvertMask();
+
+    if (!this.animationId) {
+      this.startMarchingAnts();
+    }
     this.app.events.emit(Events.SELECTION_INVERT);
+    this.app.canvas.scheduleRender();
+  }
+
+  _buildInvertMask() {
+    const w = this.app.canvas.width;
+    const h = this.app.canvas.height;
+    this._invertMask = document.createElement('canvas');
+    this._invertMask.width = w;
+    this._invertMask.height = h;
+    const ctx = this._invertMask.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.globalCompositeOperation = 'destination-out';
+    if (this.shape === 'ellipse' && this.bounds) {
+      ctx.beginPath();
+      ctx.ellipse(this.bounds.x + this.bounds.width / 2, this.bounds.y + this.bounds.height / 2,
+                  this.bounds.width / 2, this.bounds.height / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.path) {
+      ctx.beginPath();
+      ctx.moveTo(this.path[0].x, this.path[0].y);
+      this.path.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.closePath();
+      ctx.fill();
+    } else if (this.bounds) {
+      ctx.fillRect(this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height);
+    }
   }
 
   isPointInSelection(x, y) {
     if (!this.hasSelection()) return true;
+
+    if (this._invertMask) {
+      const px = Math.floor(x);
+      const py = Math.floor(y);
+      if (px < 0 || px >= this._invertMask.width || py < 0 || py >= this._invertMask.height) return false;
+      const pixel = this._invertMask.getContext('2d').getImageData(px, py, 1, 1).data;
+      return pixel[3] > 0;
+    }
+
     if (this.shape === 'ellipse' && this.bounds) {
       const cx = this.bounds.x + this.bounds.width / 2;
       const cy = this.bounds.y + this.bounds.height / 2;
@@ -90,27 +139,40 @@ export class Selection {
     const animate = () => {
       this.marchingAntsOffset = (this.marchingAntsOffset + 0.5) % 10;
       this.app.canvas.scheduleRender();
-      this.animationId = requestAnimationFrame(animate);
     };
-    this.animationId = requestAnimationFrame(animate);
+    this.animationId = setInterval(animate, 60);
   }
 
   stopMarchingAnts() {
     if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
+      clearInterval(this.animationId);
       this.animationId = null;
     }
   }
 
   render(ctx) {
     if (!this.hasSelection()) return;
-    
+
     ctx.save();
+
+    if (this._invertMask) {
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.lineDashOffset = -this.marchingAntsOffset;
+      ctx.strokeRect(0, 0, this.app.canvas.width, this.app.canvas.height);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineDashOffset = -this.marchingAntsOffset + 5;
+      ctx.strokeRect(0, 0, this.app.canvas.width, this.app.canvas.height);
+      ctx.restore();
+      return;
+    }
+
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 5]);
     ctx.lineDashOffset = -this.marchingAntsOffset;
-    
+
     if (this.shape === 'ellipse' && this.bounds) {
       ctx.beginPath();
       ctx.ellipse(this.bounds.x + this.bounds.width/2, this.bounds.y + this.bounds.height/2,
@@ -125,8 +187,7 @@ export class Selection {
     } else if (this.bounds) {
       ctx.strokeRect(this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height);
     }
-    
-    // White stroke for contrast
+
     ctx.strokeStyle = '#ffffff';
     ctx.lineDashOffset = -this.marchingAntsOffset + 5;
     if (this.shape === 'ellipse' && this.bounds) {
@@ -137,7 +198,7 @@ export class Selection {
     } else if (this.bounds) {
       ctx.strokeRect(this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height);
     }
-    
+
     ctx.restore();
   }
 
@@ -146,8 +207,10 @@ export class Selection {
     const ctx = layer.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    
-    if (this.shape === 'ellipse' && this.bounds) {
+
+    if (this._invertMask) {
+      ctx.drawImage(this._invertMask, 0, 0);
+    } else if (this.shape === 'ellipse' && this.bounds) {
       ctx.beginPath();
       ctx.ellipse(this.bounds.x + this.bounds.width/2, this.bounds.y + this.bounds.height/2,
                   this.bounds.width/2, this.bounds.height/2, 0, 0, Math.PI * 2);
@@ -155,7 +218,7 @@ export class Selection {
     } else if (this.bounds) {
       ctx.fillRect(this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height);
     }
-    
+
     ctx.restore();
   }
 
