@@ -1,12 +1,12 @@
 {
   "name": "senangwebs-photobooth",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "A browser-based image editor featuring layers, drawing tools, and filters",
   "main": "dist/swp.js",
   "style": "dist/swp.css",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode production",
+    "build": "webpack --mode production && webpack --mode production --config webpack.config.min.js",
     "dev": "webpack --mode development --watch",
     "start": "webpack serve --mode development"
   },
@@ -29,6 +29,7 @@
     "babel-loader": "^9.0.0",
     "baseline-browser-mapping": "^2.10.30",
     "css-loader": "^6.0.0",
+    "css-minimizer-webpack-plugin": "^8.0.0",
     "mini-css-extract-plugin": "^2.0.0",
     "style-loader": "^3.0.0",
     "webpack": "^5.0.0",
