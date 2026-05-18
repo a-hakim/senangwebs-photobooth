@@ -28,5 +28,14 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({ filename: 'swp.css' })
-  ]
+  ],
+  devServer: {
+    static: {
+      directory: path.resolve(__dirname),
+      watch: true
+    },
+    port: 3000,
+    hot: false,
+    open: '/examples/index.html'
+  }
 };

@@ -209,13 +209,18 @@ export class ToolManager {
    * @param {HTMLCanvasElement} canvas - Display canvas
    */
   bindCanvasEvents(canvas) {
-    canvas.addEventListener('pointerdown', this.handlePointerDown.bind(this));
-    canvas.addEventListener('pointermove', this.handlePointerMove.bind(this));
-    canvas.addEventListener('pointerup', this.handlePointerUp.bind(this));
-    canvas.addEventListener('pointerleave', this.handlePointerLeave.bind(this));
-    
-    // Prevent context menu on right-click
-    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    this._canvas = canvas;
+    this._boundPointerDown = this.handlePointerDown.bind(this);
+    this._boundPointerMove = this.handlePointerMove.bind(this);
+    this._boundPointerUp = this.handlePointerUp.bind(this);
+    this._boundPointerLeave = this.handlePointerLeave.bind(this);
+    this._boundContextMenu = e => e.preventDefault();
+
+    canvas.addEventListener('pointerdown', this._boundPointerDown);
+    canvas.addEventListener('pointermove', this._boundPointerMove);
+    canvas.addEventListener('pointerup', this._boundPointerUp);
+    canvas.addEventListener('pointerleave', this._boundPointerLeave);
+    canvas.addEventListener('contextmenu', this._boundContextMenu);
   }
 
   /**
@@ -265,6 +270,14 @@ export class ToolManager {
    * Destroy tool manager
    */
   destroy() {
+    if (this._canvas) {
+      if (this._boundPointerDown) this._canvas.removeEventListener('pointerdown', this._boundPointerDown);
+      if (this._boundPointerMove) this._canvas.removeEventListener('pointermove', this._boundPointerMove);
+      if (this._boundPointerUp) this._canvas.removeEventListener('pointerup', this._boundPointerUp);
+      if (this._boundPointerLeave) this._canvas.removeEventListener('pointerleave', this._boundPointerLeave);
+      if (this._boundContextMenu) this._canvas.removeEventListener('contextmenu', this._boundContextMenu);
+      this._canvas = null;
+    }
     this.tools.forEach(tool => {
       if (tool.destroy) tool.destroy();
     });

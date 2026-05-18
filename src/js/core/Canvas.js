@@ -33,6 +33,8 @@ export class Canvas {
 
     // Checkerboard pattern for transparency
     this.checkerboardPattern = null;
+
+    this._boundWheel = null;
   }
 
   /**
@@ -109,10 +111,9 @@ export class Canvas {
    * Bind viewport events
    */
   bindEvents() {
-    // Wheel zoom
-    this.viewport.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+    this._boundWheel = this.handleWheel.bind(this);
+    this.viewport.addEventListener('wheel', this._boundWheel, { passive: false });
 
-    // Resize observer
     this.resizeObserver = new ResizeObserver(() => {
       this.updateDisplaySize();
       this.render();
@@ -309,12 +310,9 @@ export class Canvas {
     // Draw to display canvas with zoom/pan
     this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
 
-    // Fill with gray background
-    if (this.app.options.theme === 'dark') {
-      this.displayCtx.fillStyle = '#18181B';
-    } else {
-      this.displayCtx.fillStyle = '#f5f5f5';
-    }
+    const appEl = this.app.container.closest('.swp-app') || this.app.container;
+    const bgColor = getComputedStyle(appEl).getPropertyValue('--swp-canvas-bg').trim() || '#18181B';
+    this.displayCtx.fillStyle = bgColor;
     this.displayCtx.fillRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
 
     // Draw work canvas with transform
@@ -392,6 +390,11 @@ export class Canvas {
   destroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (this.viewport && this._boundWheel) {
+      this.viewport.removeEventListener('wheel', this._boundWheel);
+      this._boundWheel = null;
     }
     if (this.viewport) {
       this.viewport.remove();

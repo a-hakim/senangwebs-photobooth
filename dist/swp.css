@@ -59,6 +59,11 @@
   padding: 0;
 }
 
+.swp-app ss-icon, .swp-app ss-icon::before, .swp-app ss-icon::after {
+  margin: revert;
+  padding: revert;
+}
+
 /* Main Container */
 .swp-app {
   display: flex;
@@ -271,6 +276,7 @@
   position: absolute;
   top: 0;
   left: 0;
+  touch-action: none;
 }
 
 .swp-overlay-canvas {

@@ -29,12 +29,14 @@ class SWP {
     }
 
     this.options = {
-      width: options.width || 1920,
-      height: options.height || 1080,
-      theme: options.theme || 'dark',
-      accentColor: options.accentColor || '#00FF99',
+      width: 1920,
+      height: 1080,
+      theme: 'dark',
+      accentColor: '#00FF99',
       ...options
     };
+    this.options.width = Math.min(10000, Math.max(1, this.options.width));
+    this.options.height = Math.min(10000, Math.max(1, this.options.height));
 
     // Core systems
     this.events = new EventEmitter();
@@ -315,9 +317,8 @@ if (typeof window !== 'undefined') {
   // Auto-init on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      const newInstances = SWP.autoInit();
-      SWP.instances.push(...newInstances);
-    });
+      SWP.instances.push(...SWP.autoInit());
+    }, { once: true });
   } else {
     // DOM already loaded
     const newInstances = SWP.autoInit();

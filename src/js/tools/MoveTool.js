@@ -27,6 +27,7 @@ export class MoveTool extends BaseTool {
     this.transformHandle = null;
     this.originalBounds = null;
     this.originalImageData = null; // Store original image for quality resize
+    this._transformTemp = null; // Cached temp canvas for transform
     
     // Snap state
     this.activeSnaps = { x: null, y: null };
@@ -106,6 +107,7 @@ export class MoveTool extends BaseTool {
     this.transformHandle = null;
     this.originalBounds = null;
     this.originalImageData = null;
+    this._transformTemp = null;
     this.activeSnaps = { x: null, y: null };
     
     super.onPointerUp(e);
@@ -303,23 +305,22 @@ export class MoveTool extends BaseTool {
     
     // Resize from original image to prevent quality loss
     if (newWidth !== layer.width || newHeight !== layer.height) {
-      // Create temp canvas with original image
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = this.originalImageData.width;
-      tempCanvas.height = this.originalImageData.height;
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.putImageData(this.originalImageData, 0, 0);
-      
-      // Resize layer canvas
+      if (!this._transformTemp || this._transformTemp.width !== this.originalImageData.width) {
+        this._transformTemp = document.createElement('canvas');
+        this._transformTemp.width = this.originalImageData.width;
+        this._transformTemp.height = this.originalImageData.height;
+        const tempCtx = this._transformTemp.getContext('2d');
+        tempCtx.putImageData(this.originalImageData, 0, 0);
+      }
+
       layer.canvas.width = newWidth;
       layer.canvas.height = newHeight;
       layer.width = newWidth;
       layer.height = newHeight;
-      
-      // Draw scaled original to layer
+
       layer.ctx.imageSmoothingEnabled = true;
       layer.ctx.imageSmoothingQuality = 'high';
-      layer.ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+      layer.ctx.drawImage(this._transformTemp, 0, 0, newWidth, newHeight);
     }
   }
 

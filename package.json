@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
-    "dev": "webpack --mode development --watch"
+    "dev": "webpack --mode development --watch",
+    "start": "webpack serve --mode development"
   },
   "keywords": [
     "photo-editor",
@@ -26,6 +27,7 @@
     "@babel/core": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
     "babel-loader": "^9.0.0",
+    "baseline-browser-mapping": "^2.10.30",
     "css-loader": "^6.0.0",
     "mini-css-extract-plugin": "^2.0.0",
     "style-loader": "^3.0.0",
