@@ -1,6 +1,5 @@
 /**
  * SenangWebs Photobooth - UI Manager
- * TOAST UI-Inspired Simple Layout
  * @version 2.0.2
  */
 
