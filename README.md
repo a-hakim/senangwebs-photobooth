@@ -2,7 +2,7 @@
 
 A browser-based image editor featuring layers, drawing tools, and filters.
 
-[![Version](https://img.shields.io/badge/Version-2.1.0-2563EB.svg)](https://www.npmjs.com/package/senangwebs-photobooth)
+[![Version](https://img.shields.io/badge/Version-2.1.1-2563EB.svg)](https://www.npmjs.com/package/senangwebs-photobooth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![Built with SenangStart Icons](https://img.shields.io/badge/Built%20with-SenangStart%20Icons-2563EB.svg)](https://github.com/bookklik-technologies/senangstart-icons)
 
@@ -136,8 +136,8 @@ npm install senangwebs-photobooth
 
 ### CDN
 ```html
-<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.css">
-<script src="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
+<script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
 ```
 
 ### Manual Download
@@ -153,14 +153,14 @@ SenangWebs Photobooth supports two initialization methods: JavaScript API and da
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="editor"></div>
-  <script src="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
   <script>
     const editor = new SWP('#editor', {
       width: 1920,
@@ -185,7 +185,7 @@ You can also initialize the editor using data attributes for a no-code setup:
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
@@ -198,7 +198,7 @@ You can also initialize the editor using data attributes for a no-code setup:
        data-swp-theme="dark"
        data-swp-accent-color="#00FF99">
   </div>
-  <script src="https://unpkg.com/senangwebs-photobooth@2.1.0/dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
 </body>
 </html>
 ```
@@ -214,8 +214,8 @@ const editor = document.getElementById('editor').swpInstance;
 // Access all auto-initialized instances
 const allEditors = SWP.instances;
 
-// Manually trigger auto-init (if needed after dynamic content load)
-SWP.autoInit();
+// Initialize and register editors added after page load
+const newEditors = SWP.autoInit();
 ```
 
 #### Available Data Attributes
@@ -296,6 +296,14 @@ editor.confirmCurrentAction();
 
 // Destroy editor and clean up DOM
 editor.destroy();
+
+// destroy() is idempotent and clears auto-init references. This is useful
+// for data-swp views that may be unmounted and initialized again.
+const element = document.querySelector('[data-swp]');
+const autoEditor = element.swpInstance;
+autoEditor.destroy();
+autoEditor.destroy();
+const [replacementEditor] = SWP.autoInit();
 ```
 
 #### Events
@@ -307,10 +315,10 @@ editor.on('tool:select', (data) => { });
 editor.off('ready', callback);
 
 // Listen once
-editor.once('ready', () => { });
+const unsubscribe = editor.once('ready', () => { });
 
-// Wildcard - listen to all events
-editor.on('*', (eventName, data) => { });
+// Wildcard listeners receive an object with the event name and payload
+editor.on('*', ({ event, data }) => { });
 ```
 
 ### Sub-System APIs

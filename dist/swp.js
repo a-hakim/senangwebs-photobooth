@@ -110,12 +110,14 @@ class EventEmitter {
    * Subscribe to an event once
    * @param {string} event - Event name
    * @param {Function} callback - Callback function
+   * @returns {Function} Unsubscribe function
    */
   once(event, callback) {
     if (!this.onceEvents.has(event)) {
       this.onceEvents.set(event, new Set());
     }
     this.onceEvents.get(event).add(callback);
+    return () => this.off(event, callback);
   }
 
   /**
@@ -7109,6 +7111,7 @@ class SWP {
     if (!this.container) {
       throw new Error('SWP: Container element not found');
     }
+    this._destroyed = false;
     this.options = {
       width: 1920,
       height: 1080,
@@ -7170,8 +7173,12 @@ class SWP {
     this.ui.updateHistoryPanel();
     this.ui.updateToolbox();
 
-    // Emit ready
-    this.events.emit(Events.READY);
+    // Defer ready so callers can subscribe immediately after construction.
+    Promise.resolve().then(() => {
+      if (!this._destroyed) {
+        this.events.emit(Events.READY);
+      }
+    });
   }
 
   // Public API
@@ -7228,6 +7235,9 @@ class SWP {
   }
   on(event, callback) {
     return this.events.on(event, callback);
+  }
+  once(event, callback) {
+    return this.events.once(event, callback);
   }
   off(event, callback) {
     this.events.off(event, callback);
@@ -7307,6 +7317,10 @@ class SWP {
     }
   }
   destroy() {
+    if (this._destroyed) return;
+    this._destroyed = true;
+    const container = this.container;
+    this.tools.destroy();
     this.keyboard.destroy();
     this.selection.destroy();
     this.canvas.destroy();
@@ -7316,6 +7330,16 @@ class SWP {
     if (this._rootEl && this._rootEl.parentNode) {
       this._rootEl.remove();
     }
+    if (container?.swpInstance === this) {
+      delete container.swpInstance;
+    }
+    const instanceIndex = SWP.instances.indexOf(this);
+    if (instanceIndex !== -1) {
+      SWP.instances.splice(instanceIndex, 1);
+    }
+    this.events.removeAllListeners();
+    this._rootEl = null;
+    this.container = null;
   }
 }
 
@@ -7367,6 +7391,7 @@ SWP.autoInit = function () {
     const options = SWP.parseDataAttributes(element);
     const instance = new SWP(element, options);
     element.swpInstance = instance;
+    SWP.instances.push(instance);
     instances.push(instance);
   });
   return instances;
@@ -7386,14 +7411,13 @@ if (typeof window !== 'undefined') {
   // Auto-init on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      SWP.instances.push(...SWP.autoInit());
+      SWP.autoInit();
     }, {
       once: true
     });
   } else {
     // DOM already loaded
-    const newInstances = SWP.autoInit();
-    SWP.instances.push(...newInstances);
+    SWP.autoInit();
   }
 }
 })();

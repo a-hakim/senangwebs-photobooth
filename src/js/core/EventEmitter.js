@@ -30,12 +30,15 @@ export class EventEmitter {
    * Subscribe to an event once
    * @param {string} event - Event name
    * @param {Function} callback - Callback function
+   * @returns {Function} Unsubscribe function
    */
   once(event, callback) {
     if (!this.onceEvents.has(event)) {
       this.onceEvents.set(event, new Set());
     }
     this.onceEvents.get(event).add(callback);
+
+    return () => this.off(event, callback);
   }
 
   /**

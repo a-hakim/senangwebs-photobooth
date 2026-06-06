@@ -1,6 +1,6 @@
 {
   "name": "senangwebs-photobooth",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A browser-based image editor featuring layers, drawing tools, and filters",
   "main": "dist/swp.js",
   "style": "dist/swp.css",
