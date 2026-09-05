@@ -1,7 +1,7 @@
 ---
 name: senangwebs-photobooth
 description: Browser-based image editor with layers, 24 blend modes, drawing tools, filters, selections, and export workflows.
-version: 2.1.1
+version: 2.2.0
 package: senangwebs-photobooth
 ---
 
