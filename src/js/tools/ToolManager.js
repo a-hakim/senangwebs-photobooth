@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Tool Manager
  * Manages tool selection and events
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -25,7 +25,12 @@ export class ToolManager {
     this.currentTool = null;
     this.previousTool = null;
     this.temporaryTool = null;
-    
+
+    // Multi-touch gesture state (pinch-zoom / two-finger pan)
+    this._activePointers = new Map();
+    this._gesturing = false;
+    this._gestureStart = null;
+
     this.init();
   }
 
@@ -197,14 +202,6 @@ export class ToolManager {
   }
 
   /**
-   * Start free transform on active layer
-   */
-  startTransform() {
-    // TODO: Implement transform mode
-    console.log('Transform mode');
-  }
-
-  /**
    * Bind canvas events
    * @param {HTMLCanvasElement} canvas - Display canvas
    */
@@ -228,10 +225,23 @@ export class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerDown(e) {
+    // Track pointers for multi-touch gestures
+    this._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (this._activePointers.size === 2 && !this._gesturing) {
+      this._beginGesture();
+      return;
+    }
+    if (this._gesturing) return;
+
     if (!this.currentTool) return;
     
-    // Set pointer capture
-    e.target.setPointerCapture(e.pointerId);
+    // Set pointer capture (non-fatal: synthetic/already-released pointers throw)
+    try {
+      e.target.setPointerCapture(e.pointerId);
+    } catch (err) {
+      // Ignore — tools still work without capture
+    }
     
     this.currentTool.onPointerDown(e);
   }
@@ -241,6 +251,13 @@ export class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerMove(e) {
+    if (this._activePointers.has(e.pointerId)) {
+      this._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (this._gesturing) {
+      this._updateGesture();
+      return;
+    }
     if (!this.currentTool) return;
     this.currentTool.onPointerMove(e);
   }
@@ -250,9 +267,20 @@ export class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerUp(e) {
+    this._activePointers.delete(e.pointerId);
+    if (this._gesturing) {
+      if (this._activePointers.size < 2) {
+        this._endGesture();
+      }
+      return;
+    }
     if (!this.currentTool) return;
     
-    e.target.releasePointerCapture(e.pointerId);
+    try {
+      e.target.releasePointerCapture(e.pointerId);
+    } catch (err) {
+      // Pointer capture may already be released
+    }
     
     this.currentTool.onPointerUp(e);
   }
@@ -262,8 +290,81 @@ export class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerLeave(e) {
+    if (this._gesturing) {
+      this._activePointers.delete(e.pointerId);
+      if (this._activePointers.size < 2) {
+        this._endGesture();
+      }
+      return;
+    }
     if (!this.currentTool) return;
     this.currentTool.onPointerLeave(e);
+  }
+
+  /**
+   * Begin two-finger gesture: end any active tool stroke, snapshot zoom/pan
+   */
+  _beginGesture() {
+    this._gesturing = true;
+
+    // End any in-progress tool stroke cleanly
+    if (this.currentTool && !this.temporaryTool) {
+      try {
+        this.currentTool.onPointerUp({
+          pointerId: [...this._activePointers.keys()][0],
+          clientX: 0,
+          clientY: 0,
+          preventDefault: () => {},
+          stopPropagation: () => {}
+        });
+      } catch (err) {
+        // Ignore tool cleanup errors
+      }
+    }
+
+    const [p1, p2] = [...this._activePointers.values()];
+    const canvas = this.app.canvas;
+    const rect = canvas.displayCanvas.getBoundingClientRect();
+    this._gestureStart = {
+      distance: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+      centerX: (p1.x + p2.x) / 2 - rect.left,
+      centerY: (p1.y + p2.y) / 2 - rect.top,
+      zoom: canvas.zoom,
+      panX: canvas.panX,
+      panY: canvas.panY
+    };
+  }
+
+  /**
+   * Update zoom/pan from current two-pointer state
+   */
+  _updateGesture() {
+    if (!this._gesturing || !this._gestureStart || this._activePointers.size < 2) return;
+
+    const [p1, p2] = [...this._activePointers.values()];
+    const canvas = this.app.canvas;
+    const rect = canvas.displayCanvas.getBoundingClientRect();
+
+    const distance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const centerX = (p1.x + p2.x) / 2 - rect.left;
+    const centerY = (p1.y + p2.y) / 2 - rect.top;
+
+    const zoomScale = distance / (this._gestureStart.distance || 1);
+    canvas.zoom = Math.max(canvas.minZoom, Math.min(canvas.maxZoom, this._gestureStart.zoom * zoomScale));
+
+    canvas.panX = this._gestureStart.panX + (centerX - this._gestureStart.centerX);
+    canvas.panY = this._gestureStart.panY + (centerY - this._gestureStart.centerY);
+
+    canvas.render();
+    this.app.events.emit(Events.CANVAS_ZOOM, { zoom: canvas.zoom });
+  }
+
+  /**
+   * End gesture mode
+   */
+  _endGesture() {
+    this._gesturing = false;
+    this._gestureStart = null;
   }
 
   /**
@@ -284,6 +385,9 @@ export class ToolManager {
     this.tools.clear();
     this.currentTool = null;
     this.previousTool = null;
+    this._activePointers.clear();
+    this._gesturing = false;
+    this._gestureStart = null;
   }
 }
 

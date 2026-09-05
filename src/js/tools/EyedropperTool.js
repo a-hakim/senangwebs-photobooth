@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Eyedropper Tool
  * Pick color from canvas
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -163,8 +163,8 @@ export class EyedropperTool extends BaseTool {
         label: 'Sample Size',
         options: [
           { value: 'point', label: 'Point' },
-          { value: '3x3', label: '3×3 Average' },
-          { value: '5x5', label: '5×5 Average' }
+          { value: '3x3', label: '3x3 Average' },
+          { value: '5x5', label: '5x5 Average' }
         ],
         value: this.options.sampleSize
       },

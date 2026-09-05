@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - Filter Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -75,9 +75,10 @@ export class FilterManager {
       case 'brightness': return this.adjustBrightness(imageData, options.value || 0);
       case 'contrast': return this.adjustContrast(imageData, options.value || 0);
       case 'saturation': return this.adjustSaturation(imageData, options.value || 0);
-      case 'grayscale': return this.grayscale(imageData);
-      case 'sepia': return this.sepia(imageData);
-      case 'invert': return this.invert(imageData);
+      case 'adjust': return this.applyAdjust(imageData, options);
+      case 'grayscale': return this.grayscale(imageData, options.value !== undefined ? options.value : 100);
+      case 'sepia': return this.sepia(imageData, options.value !== undefined ? options.value : 100);
+      case 'invert': return this.invert(imageData, options.value !== undefined ? options.value : 100);
       case 'blur': return this.blur(imageData, options.radius || 5);
       case 'sharpen': return this.sharpen(imageData, options.amount || 1);
       case 'hueRotate': return this.hueRotate(imageData, options.angle || 0);
@@ -95,9 +96,22 @@ export class FilterManager {
     return imageData;
   }
 
+  /**
+   * Combined adjustment: brightness + contrast + saturation in one pass chain
+   * @param {ImageData} imageData
+   * @param {Object} options - { brightness, contrast, saturation } each -100..100
+   */
+  applyAdjust(imageData, options = {}) {
+    let img = imageData;
+    if (options.brightness) img = this.adjustBrightness(img, options.brightness);
+    if (options.contrast) img = this.adjustContrast(img, options.contrast);
+    if (options.saturation) img = this.adjustSaturation(img, options.saturation);
+    return img;
+  }
+
   adjustContrast(imageData, value) {
     const data = imageData.data;
-    const clampedValue = Math.max(0, Math.min(255, value));
+    const clampedValue = Math.max(-255, Math.min(255, value));
     const denom = 259 - clampedValue;
     const factor = denom !== 0 ? (259 * (clampedValue + 255)) / (255 * denom) : 1;
     for (let i = 0; i < data.length; i += 4) {
@@ -120,32 +134,47 @@ export class FilterManager {
     return imageData;
   }
 
-  grayscale(imageData) {
+  grayscale(imageData, amount = 100) {
     const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = data[i + 1] = data[i + 2] = gray;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
+    if (t >= 1) {
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        data[i] = data[i + 1] = data[i + 2] = gray;
+      }
+    } else {
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        data[i] = data[i] + (gray - data[i]) * t;
+        data[i + 1] = data[i + 1] + (gray - data[i + 1]) * t;
+        data[i + 2] = data[i + 2] + (gray - data[i + 2]) * t;
+      }
     }
     return imageData;
   }
 
-  sepia(imageData) {
+  sepia(imageData, amount = 100) {
     const data = imageData.data;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i], g = data[i + 1], b = data[i + 2];
-      data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-      data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-      data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+      const sr = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+      const sg = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+      const sb = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+      data[i] = r + (sr - r) * t;
+      data[i + 1] = g + (sg - g) * t;
+      data[i + 2] = b + (sb - b) * t;
     }
     return imageData;
   }
 
-  invert(imageData) {
+  invert(imageData, amount = 100) {
     const data = imageData.data;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
     for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255 - data[i];
-      data[i + 1] = 255 - data[i + 1];
-      data[i + 2] = 255 - data[i + 2];
+      data[i] = data[i] + (255 - data[i] - data[i]) * t;
+      data[i + 1] = data[i + 1] + (255 - data[i + 1] - data[i + 1]) * t;
+      data[i + 2] = data[i + 2] + (255 - data[i + 2] - data[i + 2]) * t;
     }
     return imageData;
   }
@@ -247,9 +276,9 @@ export class FilterManager {
       { name: 'contrast', label: 'Contrast', hasOptions: true },
       { name: 'saturation', label: 'Saturation', hasOptions: true },
       { name: 'hueRotate', label: 'Hue/Saturation', hasOptions: true },
-      { name: 'grayscale', label: 'Grayscale', hasOptions: false },
-      { name: 'sepia', label: 'Sepia', hasOptions: false },
-      { name: 'invert', label: 'Invert', hasOptions: false },
+      { name: 'grayscale', label: 'Grayscale', hasOptions: true },
+      { name: 'sepia', label: 'Sepia', hasOptions: true },
+      { name: 'invert', label: 'Invert', hasOptions: true },
       { name: 'blur', label: 'Blur', hasOptions: true },
       { name: 'sharpen', label: 'Sharpen', hasOptions: true }
     ];

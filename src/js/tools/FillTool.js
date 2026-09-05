@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - Fill Tool (Paint Bucket)
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';

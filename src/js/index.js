@@ -1,6 +1,6 @@
 /**
  * SenangWebs Photobooth (SWP) - Module Exports
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 // Core

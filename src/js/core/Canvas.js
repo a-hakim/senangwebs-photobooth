@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Canvas Manager
  * Multi-layer canvas with viewport management
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { Events } from './EventEmitter.js';

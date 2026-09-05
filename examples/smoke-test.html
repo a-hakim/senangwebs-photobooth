@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SWP UX Smoke Test</title>
+  <link rel="stylesheet" href="../dist/swp.css">
+  <style>
+    body { margin: 0; }
+    #app { width: 900px; height: 600px; }
+    #results { font-family: monospace; font-size: 13px; padding: 10px; background: #000; color: #0f0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999; max-height: 40%; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <pre id="results">RUNNING…</pre>
+  <script src="../dist/swp.js"></script>
+  <script>
+    const results = [];
+    const log = (msg) => { results.push(msg); document.getElementById('results').textContent = results.join('\n'); };
+    const assert = (name, cond) => log((cond ? 'PASS' : 'FAIL') + ' ' + name);
+
+    window.addEventListener('error', (e) => log('PAGE ERROR: ' + e.message));
+
+    async function run() {
+      try {
+        assert('SWP global exists', typeof window.SWP === 'function');
+
+        const app = new SWP(document.getElementById('app'), { width: 800, height: 600 });
+        await new Promise(r => setTimeout(r, 300));
+
+        const root = document.querySelector('.swp-root');
+
+        // 1. Tool rail
+        const railItems = root.querySelectorAll('.swp-menu-item');
+        assert('rail has 17 items (12 tools + 5 ops)', railItems.length === 17);
+
+        // 2. Empty state visible on fresh doc
+        const emptyState = root.querySelector('.swp-empty-state');
+        assert('empty state visible on fresh document', emptyState && !emptyState.hidden);
+
+        // 3. Click brush -> options sheet with sliders
+        root.querySelector('[data-menu="brush"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        const sheet1 = root.querySelector('.swp-submenu');
+        assert('brush options sheet open', !sheet1.hidden);
+        const sliders = sheet1.querySelectorAll('input[type="range"]');
+        assert('brush sheet has 5 sliders', sliders.length === 5);
+
+        // 4. Keyboard shortcut activates tool + sheet
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', bubbles: true }));
+        await new Promise(r => setTimeout(r, 100));
+        const eraserActive = root.querySelector('[data-menu="eraser"]').classList.contains('active');
+        assert('keyboard E activates eraser + rail sync', eraserActive);
+        assert('eraser options sheet open', !root.querySelector('.swp-submenu').hidden);
+
+        // 5. Adjust op panel
+        root.querySelector('[data-menu="adjust"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        const adjustSliders = root.querySelectorAll('.swp-submenu [data-adjust]');
+        assert('adjust panel has 3 sliders', adjustSliders.length === 3);
+
+        // 6. Adjust live preview + apply
+        const beforePush = app.history.count;
+        adjustSliders[0].value = 40;
+        adjustSliders[0].dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 100));
+        adjustSliders[1].value = 30;
+        adjustSliders[1].dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 100));
+        root.querySelector('.swp-submenu [data-action="apply"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        assert('adjust apply pushed history', app.history.count === beforePush + 1);
+
+        // 7. Filter panel with live thumbnails
+        root.querySelector('[data-menu="filter"]').click();
+        await new Promise(r => setTimeout(r, 600));
+        const previews = root.querySelectorAll('.swp-filter-preview');
+        let withBg = 0;
+        previews.forEach(p => { if ((p.style.backgroundImage || '').includes('data:image')) withBg++; });
+        assert('filter thumbnails are live (' + withBg + '/' + previews.length + ')', withBg === previews.length && previews.length >= 9);
+
+        // 8. Contrast low intensity now works (Phase 0 fix)
+        const img = new ImageData(10, 10);
+        const orig = new Uint8ClampedArray(img.data);
+        for (let i = 0; i < orig.length; i += 4) { orig[i] = 200; orig[i+1] = 200; orig[i+2] = 200; }
+        const testImg = new ImageData(new Uint8ClampedArray(orig), 10, 10);
+        const out = app.filters.adjustContrast(testImg, -100);
+        assert('contrast -100 changes pixels', out.data[0] < 200);
+
+        // 9. Grayscale intensity honored
+        const colorImg = new ImageData(10, 10);
+        for (let i = 0; i < colorImg.data.length; i += 4) { colorImg.data[i] = 200; colorImg.data[i+1] = 100; colorImg.data[i+2] = 50; }
+        const out2 = app.filters.grayscale(colorImg, 50);
+        const expectedGray = 0.299 * 200 + 0.587 * 100 + 0.114 * 50;
+        const expectedBlend = 200 + (expectedGray - 200) * 0.5;
+        assert('grayscale 50% blends halfway', Math.abs(out2.data[0] - expectedBlend) < 1);
+
+        // 10. Export modal
+        root.querySelector('[data-action="export"]').click();
+        await new Promise(r => setTimeout(r, 200));
+        const exportOverlay = document.querySelector('.swp-export-dialog');
+        assert('export modal opens', !!exportOverlay);
+        const confirmBtn = exportOverlay && exportOverlay.querySelector('#exportConfirm');
+        assert('export modal has confirm', !!confirmBtn);
+        if (exportOverlay) exportOverlay.querySelector('#exportCancel').click();
+        await new Promise(r => setTimeout(r, 200));
+
+        // 11. Toast
+        app.ui.toast.success('smoke test toast');
+        await new Promise(r => setTimeout(r, 100));
+        assert('toast shows', !!document.querySelector('.swp-toast'));
+
+        // 11b. Color widget reflects current colors
+        const fgSwatch = root.querySelector('.swp-color-fg');
+        const bgSwatch = root.querySelector('.swp-color-bg');
+        assert('color widget exists in header', !!fgSwatch && !!bgSwatch);
+        assert('color widget shows foreground', fgSwatch && fgSwatch.style.backgroundColor === 'rgb(0, 0, 0)');
+        app.colors.setForeground('#ff0000');
+        await new Promise(r => setTimeout(r, 50));
+        assert('color widget syncs on setForeground', fgSwatch.style.backgroundColor === 'rgb(255, 0, 0)');
+        app.colors.swap();
+        await new Promise(r => setTimeout(r, 50));
+        assert('color widget syncs on swap', fgSwatch.style.backgroundColor === 'rgb(255, 255, 255)' && bgSwatch.style.backgroundColor === 'rgb(255, 0, 0)');
+
+        // 11c. Foreground flows into new text layer
+        app.colors.setForeground('#123456');
+        const textToolRef = app.tools.getTool('text');
+        const oldTextOpts = { ...textToolRef.options };
+        textToolRef.options.color = app.colors.foreground;
+
+        // 12. Dialog confirm
+        const dialogPromise = app.ui.dialog.confirm({ title: 'T', message: 'M', confirmLabel: 'OK' });
+        await new Promise(r => setTimeout(r, 200));
+        assert('confirm dialog opens', !!document.querySelector('.swp-dialog'));
+        const okBtn = document.querySelector('.swp-dialog [data-dialog="confirm"]');
+        if (okBtn) okBtn.click();
+        const confirmed = await dialogPromise;
+        assert('confirm dialog resolves true', confirmed === true);
+
+        // 13. Crop portrait ratio via options sheet
+        root.querySelector('[data-menu="crop"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        const chip = root.querySelector('.swp-submenu [data-chip-group="aspectRatio"] [data-opt-value="9:16"]');
+        assert('crop 9:16 chip exists', !!chip);
+        if (chip) chip.click();
+        await new Promise(r => setTimeout(r, 50));
+        const cropTool = app.tools.getTool('crop');
+        assert('crop aspect ratio set to 0.5625', Math.abs(cropTool.getAspectRatio() - 9/16) < 0.001);
+
+        // 14. Text tool hidden input
+        root.querySelector('[data-menu="text"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        // simulate canvas click via pointer event on display canvas
+        const display = app.canvas.displayCanvas;
+        const rect = display.getBoundingClientRect();
+        const pd = new PointerEvent('pointerdown', { bubbles: true, clientX: rect.left + 200, clientY: rect.top + 200, pointerId: 1 });
+        display.dispatchEvent(pd);
+        display.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: rect.left + 200, clientY: rect.top + 200, pointerId: 1 }));
+        await new Promise(r => setTimeout(r, 100));
+        const textInput = document.querySelector('.swp-text-input');
+        assert('text hidden input created', !!textInput);
+        if (textInput) {
+          textInput.value = 'Hello';
+          textInput.dispatchEvent(new Event('input', { bubbles: true }));
+          await new Promise(r => setTimeout(r, 50));
+          const textLayer = app.layers.getLayers().find(l => l.type === 'text');
+          assert('text input feeds layer text', textLayer && textLayer.textContent === 'Hello');
+        }
+
+        // 15. Load image replaces empty state
+        const c = document.createElement('canvas');
+        c.width = 100; c.height = 100;
+        const cx = c.getContext('2d');
+        cx.fillStyle = 'red'; cx.fillRect(0, 0, 100, 100);
+        await app.loadImage(c.toDataURL());
+        await new Promise(r => setTimeout(r, 200));
+        assert('empty state hidden after image load', emptyState.hidden);
+
+        // 16. Line shape draws visible pixels (regression: stroke was transparent)
+        app.canvas.setZoom(100);
+        app.canvas.panX = 0;
+        app.canvas.panY = 0;
+        app.canvas.render();
+        root.querySelector('[data-menu="shape"]').click();
+        await new Promise(r => setTimeout(r, 100));
+        const shapeToolRef = app.tools.getTool('shape');
+        shapeToolRef.options.shape = 'line';
+        shapeToolRef.options.createNewLayer = false;
+        shapeToolRef.options.strokeColor = '#00ff00';
+        shapeToolRef.options.strokeWidth = 4;
+        const r2 = app.canvas.displayCanvas.getBoundingClientRect();
+        display.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r2.left + 20, clientY: r2.top + 20, pointerId: 7 }));
+        display.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: r2.left + 80, clientY: r2.top + 20, pointerId: 7 }));
+        display.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: r2.left + 80, clientY: r2.top + 20, pointerId: 7 }));
+        display.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, clientX: r2.left + 80, clientY: r2.top + 20, pointerId: 7 }));
+        await new Promise(r => setTimeout(r, 150));
+        const activeLayerRef = app.layers.getActiveLayer();
+        const layerImg = activeLayerRef.ctx.getImageData(0, 0, activeLayerRef.width, activeLayerRef.height);
+        const li = layerImg.data;
+        let found = null;
+        for (let y = 0; y < layerImg.height && !found; y++) {
+          for (let x = 0; x < layerImg.width; x++) {
+            const idx = (y * layerImg.width + x) * 4;
+            if (li[idx + 3] > 100 && li[idx + 1] > 200 && li[idx] < 100) { found = { x, y }; break; }
+          }
+        }
+        assert('line shape draws visible pixels (found at ' + JSON.stringify(found) + ', doc 100x100)', !!found);
+
+        const failCount = results.filter(r => r.startsWith('FAIL') || r.startsWith('PAGE ERROR')).length;
+        log('DONE ' + (failCount === 0 ? 'ALL PASS' : failCount + ' FAILURES'));
+      } catch (err) {
+        log('FATAL: ' + err.message + '\n' + (err.stack || ''));
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run);
+    } else {
+      run();
+    }
+  </script>
+</body>
+</html>

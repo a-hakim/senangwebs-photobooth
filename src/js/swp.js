@@ -1,7 +1,7 @@
 /**
  * SenangWebs Photobooth (SWP)
  * Professional browser-based image editor
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import '../css/swp.css';

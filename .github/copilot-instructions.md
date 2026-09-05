@@ -1,252 +1,77 @@
 # SenangWebs Photobooth - AI Agent Instructions
 
 ## Project Overview
-A zero-dependency, client-side photo editing library built as a UMD module. All image processing happens in the browser using HTML5 Canvas API and CSS filters. Single-class architecture exported as both ES6 module and global `window.SWP`.
+A client-side image editing library built as a UMD module (`window.SWP`). All image processing happens in the browser using the HTML5 Canvas API. Current version: 2.x (multi-module architecture).
 
 ## Architecture & Design Principles
 
 ### Core Philosophy
-- **Zero runtime dependencies** - Pure vanilla JavaScript, no frameworks
+- **Zero runtime dependencies** (except `@bookklik/senangstart-icons` for icons) - Pure vanilla JavaScript, no frameworks
 - **Client-side only** - No server-side processing, all Canvas API based
-- **Single responsibility** - One `SWP` class handles all functionality (`src/js/swp.js`)
+- **Modular architecture** - `SWP` class composes specialized managers under `src/js/`
 - **UMD export** - Works in browser (global), CommonJS, AMD, and ES6 modules
 
-### Key Architectural Pattern
-The library follows a **self-contained UI generator** pattern:
-```javascript
-// Constructor -> init() -> createUI() -> bindEvents()
-class SWP {
-  constructor(container, options) {
-    // State setup
-    this.currentState = { brightness: 100, contrast: 100, saturation: 100, ... }
-    this.init();
-  }
-  
-  createUI() {
-    // Dynamically generates complete UI: toolbar, canvas, adjustment panels
-    // All HTML is template strings, no external templates
-  }
-  
-  drawImage() {
-    // Core rendering loop - ALL visual changes go through here
-    // Applies state transformations to canvas on every change
-  }
-}
+### Key Modules
+```
+src/js/
+├── swp.js               # Main SWP class: wiring, public API, theming, auto-init
+├── core/
+│   ├── Canvas.js        # Viewport + work/display/overlay canvases, zoom/pan
+│   ├── History.js       # Snapshot-based undo/redo (20 states, PNG data-URLs)
+│   ├── Keyboard.js      # Photoshop-like keyboard shortcuts
+│   └── EventEmitter.js  # Pub/sub event bus (Events constants)
+├── layers/
+│   ├── Layer.js         # Layer model (raster/text/shape), canvas per layer
+│   ├── LayerManager.js  # Add/remove/reorder/merge/opacity/blend/lock
+│   └── BlendModes.js    # 24 blend-mode math functions
+├── tools/               # BaseTool + 12 tools, ToolManager routes pointer events
+│   └── ToolManager.js   # Tool registry, pointer routing, 2-finger pinch/pan
+├── filters/
+│   └── FilterManager.js # Pixel filters + live preview/apply/cancel
+├── selection/Selection.js
+├── ui/
+│   ├── UI.js            # Layout, header, tool rail, doc-op panels, side panels
+│   ├── OptionsSheet.js  # Generic renderer for tool getOptionsUI()
+│   ├── Toast.js         # Toast notifications
+│   ├── Dialog.js        # Promise-based confirm dialogs
+│   └── ColorManager.js
+└── io/
+    ├── FileManager.js   # Open/save .sws projects, export PNG/JPEG/WebP
+    └── Clipboard.js
 ```
 
-**Critical:** Every image manipulation (rotate, flip, adjust, filter) calls `drawImage()` which re-renders from `currentState`. Never manipulate canvas directly outside `drawImage()`.
+### Critical Patterns
+- **UI is generated at runtime** by `UI.createLayout()` using template strings; styling in `src/css/swp.css` with CSS variables (dark/light themes, accent color).
+- **Tool options UI**: every tool defines `getOptionsUI()` returning a declarative schema (`slider` / `select` / `checkbox` / `color` / `button`). The `OptionsSheet` renders it generically — never hand-code per-tool panels.
+- **History**: push state AFTER mutating (`pushState` captures current state). UI-level canvas ops (rotate/flip/resize) and tools all follow this.
+- **Filter preview**: `FilterManager.startPreview()/previewFilter()/applyFilter()/cancelPreview()` — preview rewrites the active layer from a saved `ImageData` snapshot until Apply/Cancel.
+- **Events**: modules communicate via `Events` constants (e.g. `TOOL_SELECT`, `HISTORY_PUSH`, `DOCUMENT_NEW`); the UI listens to sync its state.
 
 ## Build System & Workflows
 
 ### Development Commands
 ```bash
 npm run dev      # Webpack watch mode with auto-rebuild (no dev server)
-npm run build    # Production: dist/swp.min.js (~10KB) + swp.min.css (~4KB)
+npm run build    # Production: dist/swp.min.js + swp.min.css
 ```
-**Note:** There is no dev server configured. Open `examples/index.html` directly in browser or use your own local server. The `dev` script runs webpack in watch mode for auto-rebuilding.
+**Note:** There is no dev server configured. Open `examples/*.html` via a local server (e.g. WAMP) — demo pages reference `dist/` files via script tags.
 
 ### Build Configuration (webpack.config.js)
-- **Dual entry points:** `swp.js` and `styles.css` (separate entries, not CSS-in-JS)
-- **Output naming:**
-  - Dev: `swp.js` + `swp.css`
-  - Prod: Uses same filenames (no .min suffix - configured elsewhere)
-- **UMD library config:** Exports as `SWP` global + default ES6 export
-- **NO HtmlWebpackPlugin** - Demo pages reference dist/ files via script tags
-- **CSS extraction:** MiniCssExtractPlugin extracts CSS to separate file
+- **Entry:** `src/js/swp.js` (imports `src/css/swp.css`)
+- **UMD library:** exports as `SWP` global + default ES6 export
+- **CSS extraction:** MiniCssExtractPlugin to a separate file
+- **No HtmlWebpackPlugin** - Demo pages reference dist/ files via script tags
 
-### File Structure
-```
-src/
-├── js/swp.js      # Single ~630-line class - ALL library logic
-├── css/swp.css    # Complete styling (~6KB)
-dist/              # Generated build artifacts
-├── swp.js         # Built library bundle
-└── swp.css        # Built styles
-examples/
-└── index.html     # Standalone example (uses dist/ files via script tags)
-spec.md            # Original specification - source of truth
-```
+### UX Model (v2.2 revamp)
+- **Tool rail** (bottom, scrollable): all 12 tools + document ops (Rotate/Flip/Resize/Adjust/Filter)
+- **Options sheet**: contextual panel above the rail; renders the active tool's `getOptionsUI()`
+- **Feedback**: `ui.toast` (success/error/info), `ui.dialog.confirm()` for destructive actions, busy overlay via `ui.withBusy(label, fn)`
+- **Empty state**: shown for fresh documents; supports drag-drop, paste, browse
+- **Export modal**: format, quality, filename, project save, size estimate
+- **Mobile-first**: hidden textarea for text entry (IME/keyboard/paste), two-finger pinch-zoom/pan, 44px+ hit targets
 
-**Important:** Demo pages (`examples/index.html`) are NOT bundled by webpack. They reference built dist/ files directly via `<script>` tags. Always run `npm run build` first before testing demos.
-
-## Code Conventions & Patterns
-
-### State Management Pattern
-All edits are **non-destructive** until export:
-```javascript
-this.currentState = {
-  brightness: 100,    // 0-200 range
-  contrast: 100,      // 0-200 range
-  saturation: 100,    // 0-200 range
-  rotation: 0,        // 0, 90, 180, 270
-  flipH: false,       // boolean
-  flipV: false,       // boolean
-  filter: 'none'      // 'none' | 'grayscale' | 'sepia' | 'invert' | 'blur'
-};
-```
-State is applied via Canvas transforms + CSS filter strings in `drawImage()`.
-
-### Resize Functionality
-Canvas dimensions dynamically adjust to match loaded image:
-```javascript
-// In loadImage() - canvas resizes to exact image dimensions
-this.canvas.width = img.width;
-this.canvas.height = img.height;
-```
-Users can manually resize via UI panel which updates canvas dimensions and redraws.
-
-### Crop Functionality
-Crop method exists but **NO UI implementation** - only programmatic access:
-```javascript
-// crop(x, y, width, height) at lines ~519-538
-crop(x, y, width, height) {
-  // Creates temp canvas, draws cropped region from main canvas
-  // Loads result as new currentImage
-  tempCtx.drawImage(this.canvas, x, y, width, height, 0, 0, width, height);
-}
-```
-**Important:** Crops from current canvas state (including all applied transforms), not original image. Coordinates are relative to current canvas dimensions.
-
-**Missing UI features** (mentioned in spec.md but not implemented):
-- Interactive crop selection overlay
-- Aspect ratio presets (1:1, 4:3, 16:9, freeform)
-- Visual crop handles/rectangle
-
-If adding crop UI, follow the pattern: `createCropPanelHTML()` → add toolbar button → `handleAction('toggle-crop')` → bind mouse events for selection rectangle.
-
-### Event System
-Simple pub-sub pattern (`on()` / `emit()`):
-```javascript
-swp.on('load', () => {});    // Image loaded
-swp.on('change', () => {});  // Any edit applied
-swp.on('save', () => {});    // Image exported
-```
-
-### UI Generation Pattern
-All UI is **template strings** in `create*HTML()` methods:
-- `createToolbarHTML()` - Toolbar with data-action attributes
-- `createAdjustmentsPanelHTML()` - Sliders for brightness/contrast/saturation
-- `createFiltersPanelHTML()` - Filter button grid
-- `createResizePanelHTML()` - Canvas dimension controls
-
-Event delegation via `data-action` attributes → `handleAction(action)` dispatcher.
-
-### CSS Filter Application
-Filters use **CSS filter property** applied to canvas context:
-```javascript
-getFilterString() {
-  let filters = [];
-  if (this.currentState.brightness !== 100) filters.push(`brightness(${this.currentState.brightness}%)`);
-  // ... combine all active filters
-  return filters.join(' ');
-}
-ctx.filter = this.getFilterString(); // Applied before drawImage()
-```
-
-## Common Development Tasks
-
-### Adding Interactive Crop UI
-Currently crop only works programmatically (`swp.crop(x, y, w, h)`). To add UI:
-1. Create `createCropPanelHTML()` with aspect ratio buttons
-2. Add crop mode toggle to toolbar: `<button data-action="toggle-crop">Crop</button>`
-3. Add case in `handleAction()`: `case 'toggle-crop': this.enableCropMode(); break;`
-4. Implement selection rectangle with mouse events:
-   - `mousedown`: Start selection at (x, y)
-   - `mousemove`: Draw selection rectangle overlay
-   - `mouseup`: Call `this.crop(x, y, width, height)`
-5. Use CSS absolute positioning for overlay on `.swp-canvas-container`
-
-### Adding a New Filter
-1. Add to `createFiltersPanelHTML()` button grid
-2. Add case in `getFilterString()` switch statement
-3. CSS filter property examples: `grayscale(100%)`, `sepia(100%)`, `blur(5px)`
-
-### Adding a New Adjustment
-1. Add to `currentState` with default value
-2. Add slider in `createAdjustmentsPanelHTML()`
-3. Add event binding in `bindEvents()` for the slider
-4. Include in `getFilterString()` filter chain
-
-### Modifying Canvas Rendering
-**Always work in `drawImage()` method** - this is the single rendering pipeline:
-```javascript
-drawImage() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  // Apply all transforms based on currentState
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.rotate(this.currentState.rotation * Math.PI / 180);
-  ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-  ctx.filter = this.getFilterString();
-  ctx.drawImage(this.currentImage, ...);
-  ctx.restore();
-  this.emit('change');
-}
-```
-
-## Critical Implementation Details
-
-### Image Loading & CORS
-Images loaded with `crossOrigin = 'anonymous'` to enable canvas export:
-```javascript
-const img = new Image();
-img.crossOrigin = 'anonymous';  // Required for toDataURL()
-img.onload = () => { ... };
-```
-
-### Auto-initialization Pattern
-Supports declarative HTML usage via `data-swp` attribute:
-```javascript
-// In module footer:
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-swp]').forEach(container => {
-      new SWP(container);
-    });
-  });
-}
-```
-
-### Export Format
-```javascript
-getImageData(format = 'jpeg', quality = 0.9) {
-  const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
-  return this.canvas.toDataURL(mimeType, quality);
-}
-```
-
-## Testing & Debugging
-
-### Manual Testing
-Use dev server console:
-```javascript
-swpInstance.loadImage('https://picsum.photos/800/600');
-swpInstance.rotate(90);
-swpInstance.setAdjustment('brightness', 150);
-swpInstance.applyFilter('grayscale');
-```
-
-### Common Pitfalls
-- **Don't manipulate canvas outside `drawImage()`** - breaks state sync
-- **Always call `drawImage()` after state changes** - or UI won't update
-- **CSS import must be first line in swp.js** - webpack extracts it
-- **Filter values are percentages (0-200)** - not 0-1 or 0-255
-- **Rotation is in degrees** - convert to radians in drawImage()
-
-## Integration Points
-
-### Browser APIs Used
-- **Canvas 2D Context:** All rendering (`getContext('2d')`)
-- **FileReader API:** Image upload (`readAsDataURL`)
-- **Canvas.toDataURL():** Image export
-- **CSS filter property:** Filter effects
-
-### No External Dependencies
-- No npm runtime dependencies
-- No framework requirements
-- Works in vanilla HTML, React, Vue, etc.
-
-## Documentation References
-- `spec.md` - Original feature specification (source of truth)
-- `README.md` - API documentation and usage examples
-- `examples/index.html` - Standalone usage example (uses built dist/ files)
+### Conventions
+- Keep zero runtime dependencies (icons package is the only exception)
+- All destructive UI actions must be confirmable and reversible (history)
+- History pushes happen after mutation, with a descriptive label
+- New tools: extend `BaseTool`, implement `getOptionsUI()`, register in `ToolManager.init()`, add to `UI.RAIL_ITEMS`

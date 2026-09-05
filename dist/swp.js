@@ -81,7 +81,7 @@ __webpack_require__.d(__webpack_exports__, {
 /**
  * SenangWebs Studio - EventEmitter
  * Central event bus for module communication
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 class EventEmitter {
@@ -265,7 +265,7 @@ const Events = {
 /**
  * SenangWebs Studio - Canvas Manager
  * Multi-layer canvas with viewport management
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -658,7 +658,7 @@ class Canvas {
 /**
  * SenangWebs Studio - History Manager
  * Undo/redo system with state snapshots
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -888,7 +888,7 @@ class History {
 /**
  * SenangWebs Studio - Keyboard Manager
  * Keyboard shortcuts and hotkey management
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 class Keyboard {
@@ -957,7 +957,6 @@ class Keyboard {
     this.register('ctrl+c', () => this.app.clipboard.copy());
     this.register('ctrl+v', () => this.app.clipboard.paste());
     this.register('ctrl+x', () => this.app.clipboard.cut());
-    this.register('ctrl+t', () => this.app.tools.startTransform());
     this.register('delete', () => this.app.layers.deleteSelection());
     this.register('backspace', () => this.app.layers.deleteSelection());
 
@@ -966,7 +965,6 @@ class Keyboard {
     this.register('ctrl+1', () => this.app.canvas.setZoom(100));
     this.register('ctrl+plus', () => this.app.canvas.zoomIn());
     this.register('ctrl+minus', () => this.app.canvas.zoomOut());
-    this.register('tab', () => this.app.ui.togglePanels());
     this.register('f', () => this.app.ui.toggleFullscreen());
 
     // Brush size
@@ -1207,7 +1205,7 @@ class Keyboard {
 /**
  * SenangWebs Studio - Layer
  * Individual layer class
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -1625,7 +1623,7 @@ class Layer {
 /**
  * SenangWebs Studio - Layer Manager
  * Managing multiple layers
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -2090,7 +2088,7 @@ class LayerManager {
 /**
  * SenangWebs Studio - Base Tool
  * Abstract base class for all tools
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -2349,7 +2347,7 @@ class BaseTool {
 /**
  * SenangWebs Studio - Move Tool
  * Move and transform layers
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -2835,7 +2833,7 @@ class MoveTool extends BaseTool {
 /**
  * SenangWebs Studio - Brush Tool
  * Freehand drawing with customizable brush
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -3128,7 +3126,7 @@ class BrushTool extends BaseTool {
 /**
  * SenangWebs Studio - Eraser Tool
  * Erase pixels from layer
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -3266,7 +3264,7 @@ class EraserTool extends BaseTool {
 /**
  * SenangWebs Studio - Shape Tool
  * Draw geometric shapes
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -3281,7 +3279,7 @@ class ShapeTool extends BaseTool {
       shape: 'rectangle',
       // rectangle, ellipse, line, polygon
       fillColor: '#000000',
-      strokeColor: 'transparent',
+      strokeColor: '#000000',
       strokeWidth: 2,
       filled: true,
       stroked: false,
@@ -3294,6 +3292,18 @@ class ShapeTool extends BaseTool {
 
     // Preview state
     this.previewShape = null;
+  }
+
+  /**
+   * Resolve a usable stroke color ('transparent' falls back to foreground)
+   * @returns {string}
+   */
+  _effectiveStrokeColor() {
+    const c = this.options.strokeColor;
+    if (!c || c === 'transparent' || c === 'none') {
+      return this.app.colors?.foreground || '#000000';
+    }
+    return c;
   }
   onPointerDown(e) {
     super.onPointerDown(e);
@@ -3318,9 +3328,16 @@ class ShapeTool extends BaseTool {
         });
         layer.shapeType = this.options.shape;
         layer.shapeData = shape;
-        layer.fillColor = this.options.filled ? this.options.fillColor : 'transparent';
-        layer.strokeColor = this.options.stroked ? this.options.strokeColor : 'transparent';
-        layer.strokeWidth = this.options.strokeWidth;
+        if (this.options.shape === 'line') {
+          // Lines are stroked only — always carry a visible stroke color
+          layer.fillColor = 'transparent';
+          layer.strokeColor = this._effectiveStrokeColor();
+          layer.strokeWidth = Math.max(1, this.options.strokeWidth);
+        } else {
+          layer.fillColor = this.options.filled ? this.options.fillColor : 'transparent';
+          layer.strokeColor = this.options.stroked ? this._effectiveStrokeColor() : 'transparent';
+          layer.strokeWidth = this.options.strokeWidth;
+        }
         this.app.layers.setActiveLayer(layer.id);
       } else {
         // Draw directly on current layer
@@ -3404,7 +3421,7 @@ class ShapeTool extends BaseTool {
   drawShape(ctx, shape) {
     ctx.save();
     ctx.fillStyle = this.options.filled ? this.options.fillColor : 'transparent';
-    ctx.strokeStyle = this.options.stroked ? this.options.strokeColor : 'transparent';
+    ctx.strokeStyle = this.options.stroked ? this._effectiveStrokeColor() : 'transparent';
     ctx.lineWidth = this.options.strokeWidth;
     switch (this.options.shape) {
       case 'rectangle':
@@ -3465,16 +3482,23 @@ class ShapeTool extends BaseTool {
     const {
       points
     } = shape;
+    ctx.save();
+    // Lines are stroke-only: ignore fill/stroke checkboxes, always visible
+    ctx.strokeStyle = this._effectiveStrokeColor();
+    ctx.lineWidth = Math.max(1, this.options.strokeWidth);
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     ctx.lineTo(points[1].x, points[1].y);
     ctx.stroke();
+    ctx.restore();
   }
   renderOverlay(ctx) {
     if (!this.previewShape) return;
     ctx.save();
     ctx.fillStyle = this.options.filled ? this.options.fillColor : 'transparent';
-    ctx.strokeStyle = this.options.stroked ? this.options.strokeColor : '#0066ff';
+    const previewStroke = this.options.stroked || this.options.shape === 'line' ? this._effectiveStrokeColor() : '#0066ff';
+    ctx.strokeStyle = previewStroke;
     ctx.lineWidth = this.options.strokeWidth || 1;
     ctx.setLineDash([5, 5]);
     ctx.globalAlpha = 0.7;
@@ -3547,7 +3571,7 @@ class ShapeTool extends BaseTool {
 /**
  * SenangWebs Photobooth - Text Tool
  * Add and edit text layers
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -3573,37 +3597,95 @@ class TextTool extends BaseTool {
 
     // Text editing state
     this.editingLayer = null;
-    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this._inputEl = null;
+    this._onInput = this._handleInput.bind(this);
+    this._onInputKeyDown = this._handleInputKeyDown.bind(this);
+    this._onInputBlur = this._handleInputBlur.bind(this);
   }
   onActivate() {
     super.onActivate();
-    document.addEventListener('keydown', this.handleKeyDown);
   }
   onDeactivate() {
     this.commitText();
-    document.removeEventListener('keydown', this.handleKeyDown);
+    this._removeInput();
     super.onDeactivate();
   }
-  handleKeyDown(e) {
-    if (!this.editingLayer) return;
 
-    // Don't process if modifier keys are pressed (let shortcuts work)
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const key = e.key;
-    if (key === 'Backspace') {
-      this.editingLayer.textContent = this.editingLayer.textContent.slice(0, -1);
-    } else if (key === 'Enter') {
-      this.editingLayer.textContent += '\n';
-    } else if (key === 'Escape') {
-      this.commitText();
-      return;
-    } else if (key.length === 1) {
-      // Single character - add to text
-      this.editingLayer.textContent += key;
+  /**
+   * Create (once) and show the hidden textarea used for text entry.
+   * Uses a real input so mobile virtual keyboards, IME and paste all work.
+   */
+  _ensureInput() {
+    if (this._inputEl?.isConnected) return this._inputEl;
+    const workspace = this.app.ui.getWorkspace();
+    if (!workspace) return null;
+    const input = document.createElement('textarea');
+    input.className = 'swp-text-input';
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('aria-label', 'Text editor');
+    input.rows = 1;
+    input.addEventListener('input', this._onInput);
+    input.addEventListener('keydown', this._onInputKeyDown);
+    input.addEventListener('blur', this._onInputBlur);
+    workspace.appendChild(input);
+    this._inputEl = input;
+    return input;
+  }
+  _removeInput() {
+    if (this._inputEl) {
+      this._inputEl.removeEventListener('input', this._onInput);
+      this._inputEl.removeEventListener('keydown', this._onInputKeyDown);
+      this._inputEl.removeEventListener('blur', this._onInputBlur);
+      this._inputEl.remove();
+      this._inputEl = null;
     }
+  }
+  _handleInput(e) {
+    if (!this.editingLayer) return;
+    this.editingLayer.textContent = e.target.value;
     this.app.canvas.scheduleRender();
+  }
+  _handleInputKeyDown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      this.commitText();
+      this._removeInput();
+    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.commitText();
+      this._removeInput();
+    }
+    // Plain Enter / Backspace / characters: native textarea behavior
+  }
+  _handleInputBlur(e) {
+    // Don't commit when focus moves into the options sheet (style tweaking)
+    if (e.relatedTarget && e.relatedTarget.closest?.('.swp-submenu')) return;
+    if (this.editingLayer) {
+      this.commitText();
+      this._removeInput();
+    }
+  }
+
+  /**
+   * Position the hidden input near the text being edited (helps mobile
+   * scroll the virtual keyboard into view without covering the text).
+   */
+  _positionInput(layer) {
+    if (!this._inputEl) return;
+    const bounds = this.getTextBounds(layer);
+    const canvas = this.app.canvas;
+    const workspace = this.app.ui.getWorkspace();
+    if (!workspace) return;
+    const wsRect = workspace.getBoundingClientRect();
+    const scale = (canvas.zoom || 100) / 100;
+    const x = wsRect.left + (canvas.panX || 0) + bounds.x * scale;
+    const y = wsRect.top + (canvas.panY || 0) + bounds.y * scale;
+    this._inputEl.style.left = `${Math.max(0, Math.round(x - wsRect.left))}px`;
+    this._inputEl.style.top = `${Math.max(0, Math.round(y - wsRect.top))}px`;
   }
   onPointerDown(e) {
     super.onPointerDown(e);
@@ -3677,6 +3759,14 @@ class TextTool extends BaseTool {
   }
   startEditingLayer(layer) {
     this.editingLayer = layer;
+    const input = this._ensureInput();
+    if (input) {
+      input.value = layer.textContent || '';
+      this._positionInput(layer);
+      input.focus({
+        preventScroll: false
+      });
+    }
     this.app.canvas.scheduleRender();
   }
   commitText() {
@@ -3689,6 +3779,7 @@ class TextTool extends BaseTool {
       this.app.history.pushState('Add Text');
     }
     this.editingLayer = null;
+    this._removeInput();
     this.app.canvas.scheduleRender();
   }
   renderOverlay(ctx) {
@@ -3805,7 +3896,7 @@ class TextTool extends BaseTool {
 /**
  * SenangWebs Studio - Crop Tool
  * Crop the canvas
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -3967,6 +4058,9 @@ class CropTool extends BaseTool {
    * @returns {number|null}
    */
   getAspectRatio() {
+    if (this.options.aspectRatio === 'custom') {
+      return this.options.customRatio || null;
+    }
     switch (this.options.aspectRatio) {
       case '1:1':
         return 1;
@@ -4256,7 +4350,7 @@ class CropTool extends BaseTool {
 /**
  * SenangWebs Studio - Zoom Tool
  * Zoom the canvas viewport
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4319,7 +4413,7 @@ class ZoomTool extends BaseTool {
 /**
  * SenangWebs Studio - Hand Tool
  * Pan the canvas viewport
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4361,7 +4455,7 @@ class HandTool extends BaseTool {
 /**
  * SenangWebs Studio - Eyedropper Tool
  * Pick color from canvas
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4513,10 +4607,10 @@ class EyedropperTool extends BaseTool {
           label: 'Point'
         }, {
           value: '3x3',
-          label: '3×3 Average'
+          label: '3x3 Average'
         }, {
           value: '5x5',
-          label: '5×5 Average'
+          label: '5x5 Average'
         }],
         value: this.options.sampleSize
       },
@@ -4540,7 +4634,7 @@ class EyedropperTool extends BaseTool {
 /**
  * SenangWebs Studio - Gradient Tool
  * Draw gradients
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4674,7 +4768,7 @@ class GradientTool extends BaseTool {
 ;// ./src/js/tools/FillTool.js
 /**
  * SenangWebs Studio - Fill Tool (Paint Bucket)
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4795,7 +4889,7 @@ class FillTool extends BaseTool {
 ;// ./src/js/tools/MarqueeTool.js
 /**
  * SenangWebs Studio - Marquee Selection Tool
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4906,7 +5000,7 @@ class MarqueeTool extends BaseTool {
 /**
  * SenangWebs Studio - Tool Manager
  * Manages tool selection and events
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -4929,6 +5023,11 @@ class ToolManager {
     this.currentTool = null;
     this.previousTool = null;
     this.temporaryTool = null;
+
+    // Multi-touch gesture state (pinch-zoom / two-finger pan)
+    this._activePointers = new Map();
+    this._gesturing = false;
+    this._gestureStart = null;
     this.init();
   }
 
@@ -5098,14 +5197,6 @@ class ToolManager {
   }
 
   /**
-   * Start free transform on active layer
-   */
-  startTransform() {
-    // TODO: Implement transform mode
-    console.log('Transform mode');
-  }
-
-  /**
    * Bind canvas events
    * @param {HTMLCanvasElement} canvas - Display canvas
    */
@@ -5128,10 +5219,24 @@ class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerDown(e) {
+    // Track pointers for multi-touch gestures
+    this._activePointers.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY
+    });
+    if (this._activePointers.size === 2 && !this._gesturing) {
+      this._beginGesture();
+      return;
+    }
+    if (this._gesturing) return;
     if (!this.currentTool) return;
 
-    // Set pointer capture
-    e.target.setPointerCapture(e.pointerId);
+    // Set pointer capture (non-fatal: synthetic/already-released pointers throw)
+    try {
+      e.target.setPointerCapture(e.pointerId);
+    } catch (err) {
+      // Ignore — tools still work without capture
+    }
     this.currentTool.onPointerDown(e);
   }
 
@@ -5140,6 +5245,16 @@ class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerMove(e) {
+    if (this._activePointers.has(e.pointerId)) {
+      this._activePointers.set(e.pointerId, {
+        x: e.clientX,
+        y: e.clientY
+      });
+    }
+    if (this._gesturing) {
+      this._updateGesture();
+      return;
+    }
     if (!this.currentTool) return;
     this.currentTool.onPointerMove(e);
   }
@@ -5149,8 +5264,19 @@ class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerUp(e) {
+    this._activePointers.delete(e.pointerId);
+    if (this._gesturing) {
+      if (this._activePointers.size < 2) {
+        this._endGesture();
+      }
+      return;
+    }
     if (!this.currentTool) return;
-    e.target.releasePointerCapture(e.pointerId);
+    try {
+      e.target.releasePointerCapture(e.pointerId);
+    } catch (err) {
+      // Pointer capture may already be released
+    }
     this.currentTool.onPointerUp(e);
   }
 
@@ -5159,8 +5285,77 @@ class ToolManager {
    * @param {PointerEvent} e - Pointer event
    */
   handlePointerLeave(e) {
+    if (this._gesturing) {
+      this._activePointers.delete(e.pointerId);
+      if (this._activePointers.size < 2) {
+        this._endGesture();
+      }
+      return;
+    }
     if (!this.currentTool) return;
     this.currentTool.onPointerLeave(e);
+  }
+
+  /**
+   * Begin two-finger gesture: end any active tool stroke, snapshot zoom/pan
+   */
+  _beginGesture() {
+    this._gesturing = true;
+
+    // End any in-progress tool stroke cleanly
+    if (this.currentTool && !this.temporaryTool) {
+      try {
+        this.currentTool.onPointerUp({
+          pointerId: [...this._activePointers.keys()][0],
+          clientX: 0,
+          clientY: 0,
+          preventDefault: () => {},
+          stopPropagation: () => {}
+        });
+      } catch (err) {
+        // Ignore tool cleanup errors
+      }
+    }
+    const [p1, p2] = [...this._activePointers.values()];
+    const canvas = this.app.canvas;
+    const rect = canvas.displayCanvas.getBoundingClientRect();
+    this._gestureStart = {
+      distance: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+      centerX: (p1.x + p2.x) / 2 - rect.left,
+      centerY: (p1.y + p2.y) / 2 - rect.top,
+      zoom: canvas.zoom,
+      panX: canvas.panX,
+      panY: canvas.panY
+    };
+  }
+
+  /**
+   * Update zoom/pan from current two-pointer state
+   */
+  _updateGesture() {
+    if (!this._gesturing || !this._gestureStart || this._activePointers.size < 2) return;
+    const [p1, p2] = [...this._activePointers.values()];
+    const canvas = this.app.canvas;
+    const rect = canvas.displayCanvas.getBoundingClientRect();
+    const distance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const centerX = (p1.x + p2.x) / 2 - rect.left;
+    const centerY = (p1.y + p2.y) / 2 - rect.top;
+    const zoomScale = distance / (this._gestureStart.distance || 1);
+    canvas.zoom = Math.max(canvas.minZoom, Math.min(canvas.maxZoom, this._gestureStart.zoom * zoomScale));
+    canvas.panX = this._gestureStart.panX + (centerX - this._gestureStart.centerX);
+    canvas.panY = this._gestureStart.panY + (centerY - this._gestureStart.centerY);
+    canvas.render();
+    this.app.events.emit(Events.CANVAS_ZOOM, {
+      zoom: canvas.zoom
+    });
+  }
+
+  /**
+   * End gesture mode
+   */
+  _endGesture() {
+    this._gesturing = false;
+    this._gestureStart = null;
   }
 
   /**
@@ -5181,13 +5376,16 @@ class ToolManager {
     this.tools.clear();
     this.currentTool = null;
     this.previousTool = null;
+    this._activePointers.clear();
+    this._gesturing = false;
+    this._gestureStart = null;
   }
 }
 /* harmony default export */ const tools_ToolManager = ((/* unused pure expression or super */ null && (ToolManager)));
 ;// ./src/js/selection/Selection.js
 /**
  * SenangWebs Studio - Selection System
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -5401,7 +5599,7 @@ class Selection {
 ;// ./src/js/filters/FilterManager.js
 /**
  * SenangWebs Studio - Filter Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -5465,12 +5663,14 @@ class FilterManager {
         return this.adjustContrast(imageData, options.value || 0);
       case 'saturation':
         return this.adjustSaturation(imageData, options.value || 0);
+      case 'adjust':
+        return this.applyAdjust(imageData, options);
       case 'grayscale':
-        return this.grayscale(imageData);
+        return this.grayscale(imageData, options.value !== undefined ? options.value : 100);
       case 'sepia':
-        return this.sepia(imageData);
+        return this.sepia(imageData, options.value !== undefined ? options.value : 100);
       case 'invert':
-        return this.invert(imageData);
+        return this.invert(imageData, options.value !== undefined ? options.value : 100);
       case 'blur':
         return this.blur(imageData, options.radius || 5);
       case 'sharpen':
@@ -5490,9 +5690,22 @@ class FilterManager {
     }
     return imageData;
   }
+
+  /**
+   * Combined adjustment: brightness + contrast + saturation in one pass chain
+   * @param {ImageData} imageData
+   * @param {Object} options - { brightness, contrast, saturation } each -100..100
+   */
+  applyAdjust(imageData, options = {}) {
+    let img = imageData;
+    if (options.brightness) img = this.adjustBrightness(img, options.brightness);
+    if (options.contrast) img = this.adjustContrast(img, options.contrast);
+    if (options.saturation) img = this.adjustSaturation(img, options.saturation);
+    return img;
+  }
   adjustContrast(imageData, value) {
     const data = imageData.data;
-    const clampedValue = Math.max(0, Math.min(255, value));
+    const clampedValue = Math.max(-255, Math.min(255, value));
     const denom = 259 - clampedValue;
     const factor = denom !== 0 ? 259 * (clampedValue + 255) / (255 * denom) : 1;
     for (let i = 0; i < data.length; i += 4) {
@@ -5513,32 +5726,47 @@ class FilterManager {
     }
     return imageData;
   }
-  grayscale(imageData) {
+  grayscale(imageData, amount = 100) {
     const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = data[i + 1] = data[i + 2] = gray;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
+    if (t >= 1) {
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        data[i] = data[i + 1] = data[i + 2] = gray;
+      }
+    } else {
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        data[i] = data[i] + (gray - data[i]) * t;
+        data[i + 1] = data[i + 1] + (gray - data[i + 1]) * t;
+        data[i + 2] = data[i + 2] + (gray - data[i + 2]) * t;
+      }
     }
     return imageData;
   }
-  sepia(imageData) {
+  sepia(imageData, amount = 100) {
     const data = imageData.data;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i],
         g = data[i + 1],
         b = data[i + 2];
-      data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-      data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-      data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+      const sr = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+      const sg = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+      const sb = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+      data[i] = r + (sr - r) * t;
+      data[i + 1] = g + (sg - g) * t;
+      data[i + 2] = b + (sb - b) * t;
     }
     return imageData;
   }
-  invert(imageData) {
+  invert(imageData, amount = 100) {
     const data = imageData.data;
+    const t = Math.max(0, Math.min(100, amount)) / 100;
     for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255 - data[i];
-      data[i + 1] = 255 - data[i + 1];
-      data[i + 2] = 255 - data[i + 2];
+      data[i] = data[i] + (255 - data[i] - data[i]) * t;
+      data[i + 1] = data[i + 1] + (255 - data[i + 1] - data[i + 1]) * t;
+      data[i + 2] = data[i + 2] + (255 - data[i + 2] - data[i + 2]) * t;
     }
     return imageData;
   }
@@ -5646,15 +5874,15 @@ class FilterManager {
     }, {
       name: 'grayscale',
       label: 'Grayscale',
-      hasOptions: false
+      hasOptions: true
     }, {
       name: 'sepia',
       label: 'Sepia',
-      hasOptions: false
+      hasOptions: true
     }, {
       name: 'invert',
       label: 'Invert',
-      hasOptions: false
+      hasOptions: true
     }, {
       name: 'blur',
       label: 'Blur',
@@ -5670,7 +5898,7 @@ class FilterManager {
 ;// ./src/js/ui/ColorManager.js
 /**
  * SenangWebs Studio - Color Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -5735,11 +5963,421 @@ class ColorManager {
 /* harmony default export */ const ui_ColorManager = ((/* unused pure expression or super */ null && (ColorManager)));
 // EXTERNAL MODULE: ./node_modules/@bookklik/senangstart-icons/dist/senangstart-icon.min.js
 var senangstart_icon_min = __webpack_require__(720);
+;// ./src/js/ui/Toast.js
+/**
+ * SenangWebs Photobooth - Toast Component
+ * Non-blocking feedback messages with optional action button
+ */
+
+class Toast {
+  constructor(app, container) {
+    this.app = app;
+    this.container = container || document.body;
+    this.root = null;
+    this.queue = [];
+  }
+  _ensureRoot() {
+    if (this.root && this.root.isConnected) return this.root;
+    this.root = document.createElement('div');
+    this.root.className = 'swp-toast-root';
+    this.root.setAttribute('role', 'status');
+    this.root.setAttribute('aria-live', 'polite');
+    this.container.appendChild(this.root);
+    return this.root;
+  }
+
+  /**
+   * Show a toast message
+   * @param {string} message - Message text
+   * @param {Object} options
+   * @param {string} options.type - 'info' | 'success' | 'error' | 'warning'
+   * @param {number} options.duration - Auto-dismiss ms (0 = sticky)
+   * @param {string} options.actionLabel - Optional action button label
+   * @param {Function} options.onAction - Optional action callback
+   * @returns {Function} Dismiss function
+   */
+  show(message, options = {}) {
+    const {
+      type = 'info',
+      duration = 3000,
+      actionLabel = null,
+      onAction = null
+    } = options;
+    const root = this._ensureRoot();
+    const el = document.createElement('div');
+    el.className = `swp-toast swp-toast-${type}`;
+    el.innerHTML = `
+      <span class="swp-toast-message"></span>
+      ${actionLabel ? '<button class="swp-toast-action"></button>' : ''}
+      <button class="swp-toast-close" aria-label="Dismiss">&times;</button>
+    `;
+    el.querySelector('.swp-toast-message').textContent = message;
+    let dismissed = false;
+    let timer = null;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      if (timer) clearTimeout(timer);
+      el.classList.add('swp-toast-out');
+      setTimeout(() => el.remove(), 200);
+    };
+    el.querySelector('.swp-toast-close').addEventListener('click', dismiss);
+    if (actionLabel) {
+      const actionBtn = el.querySelector('.swp-toast-action');
+      actionBtn.textContent = actionLabel;
+      actionBtn.addEventListener('click', () => {
+        dismiss();
+        if (typeof onAction === 'function') onAction();
+      });
+    }
+    root.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('swp-toast-in'));
+    if (duration > 0) {
+      timer = setTimeout(dismiss, duration);
+    }
+    return dismiss;
+  }
+  success(message, options = {}) {
+    return this.show(message, {
+      ...options,
+      type: 'success'
+    });
+  }
+  error(message, options = {}) {
+    return this.show(message, {
+      ...options,
+      type: 'error',
+      duration: 5000
+    });
+  }
+  warning(message, options = {}) {
+    return this.show(message, {
+      ...options,
+      type: 'warning'
+    });
+  }
+  info(message, options = {}) {
+    return this.show(message, {
+      ...options,
+      type: 'info'
+    });
+  }
+  destroy() {
+    if (this.root) {
+      this.root.remove();
+      this.root = null;
+    }
+  }
+}
+/* harmony default export */ const ui_Toast = ((/* unused pure expression or super */ null && (Toast)));
+;// ./src/js/ui/Dialog.js
+/**
+ * SenangWebs Photobooth - Dialog Component
+ * Modal confirm/prompt dialogs with promise-based API
+ */
+
+class Dialog {
+  constructor(app, container) {
+    this.app = app;
+    this.container = container || document.body;
+    this.root = null;
+    this._active = null;
+    this._onKeyDown = null;
+  }
+  _ensureRoot() {
+    if (this.root && this.root.isConnected) return this.root;
+    this.root = document.createElement('div');
+    this.root.className = 'swp-dialog-root';
+    this.container.appendChild(this.root);
+    return this.root;
+  }
+
+  /**
+   * Show a confirm dialog
+   * @param {Object} options
+   * @param {string} options.title - Dialog title
+   * @param {string} options.message - Dialog message
+   * @param {string} options.confirmLabel - Confirm button label
+   * @param {string} options.cancelLabel - Cancel button label
+   * @param {boolean} options.danger - Danger styling for confirm button
+   * @returns {Promise<boolean>} Resolves true if confirmed
+   */
+  confirm(options = {}) {
+    const {
+      title = 'Are you sure?',
+      message = '',
+      confirmLabel = 'Confirm',
+      cancelLabel = 'Cancel',
+      danger = false
+    } = options;
+    if (this._active) {
+      return Promise.resolve(false);
+    }
+    return new Promise(resolve => {
+      const root = this._ensureRoot();
+      const overlay = document.createElement('div');
+      overlay.className = 'swp-dialog-overlay';
+      overlay.innerHTML = `
+        <div class="swp-dialog" role="alertdialog" aria-modal="true" aria-labelledby="swp-dialog-title">
+          <div class="swp-dialog-title" id="swp-dialog-title"></div>
+          <div class="swp-dialog-message"></div>
+          <div class="swp-dialog-actions">
+            <button class="swp-btn" data-dialog="cancel"></button>
+            <button class="swp-btn ${danger ? 'swp-btn-danger' : 'swp-btn-primary'}" data-dialog="confirm"></button>
+          </div>
+        </div>
+      `;
+      overlay.querySelector('.swp-dialog-title').textContent = title;
+      overlay.querySelector('.swp-dialog-message').textContent = message;
+      overlay.querySelector('[data-dialog="cancel"]').textContent = cancelLabel;
+      overlay.querySelector('[data-dialog="confirm"]').textContent = confirmLabel;
+      const close = result => {
+        if (this._active !== overlay) return;
+        this._active = null;
+        document.removeEventListener('keydown', this._onKeyDown, true);
+        this._onKeyDown = null;
+        overlay.classList.add('swp-dialog-out');
+        setTimeout(() => overlay.remove(), 150);
+        resolve(result);
+      };
+      overlay.querySelector('[data-dialog="cancel"]').addEventListener('click', () => close(false));
+      overlay.querySelector('[data-dialog="confirm"]').addEventListener('click', () => close(true));
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) close(false);
+      });
+      this._onKeyDown = e => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          close(false);
+        } else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+          e.preventDefault();
+          e.stopPropagation();
+          close(true);
+        }
+      };
+      document.addEventListener('keydown', this._onKeyDown, true);
+      root.appendChild(overlay);
+      this._active = overlay;
+      requestAnimationFrame(() => overlay.classList.add('swp-dialog-in'));
+      overlay.querySelector('[data-dialog="confirm"]').focus();
+    });
+  }
+  get isOpen() {
+    return this._active !== null;
+  }
+  destroy() {
+    if (this.root) {
+      this.root.remove();
+      this.root = null;
+    }
+    this._active = null;
+  }
+}
+/* harmony default export */ const ui_Dialog = ((/* unused pure expression or super */ null && (Dialog)));
+;// ./src/js/ui/OptionsSheet.js
+/**
+ * SenangWebs Photobooth - Options Sheet
+ * Generic renderer for tool getOptionsUI() definitions
+ */
+
+class OptionsSheet {
+  constructor(app, ui) {
+    this.app = app;
+    this.ui = ui;
+  }
+
+  /**
+   * Render a tool's options into a container element
+   * @param {HTMLElement} container - Target container (submenu element)
+   * @param {BaseTool} tool - Active tool instance
+   * @param {string} toolName - Tool name
+   * @returns {boolean} Whether anything was rendered
+   */
+  render(container, tool, toolName) {
+    if (!tool || typeof tool.getOptionsUI !== 'function') return false;
+    const options = tool.getOptionsUI();
+    const keys = Object.keys(options || {});
+    if (keys.length === 0) return false;
+    const title = this._titleFor(toolName);
+    const groups = keys.map(key => {
+      const opt = options[key];
+      return this._renderControl(key, opt, tool, toolName);
+    }).join('');
+    container.innerHTML = `
+      <div class="swp-submenu-content">
+        <div class="swp-submenu-title">${title}</div>
+        ${groups}
+      </div>
+    `;
+    this._bindControls(container, tool, options);
+    return true;
+  }
+  _titleFor(toolName) {
+    const titles = {
+      move: 'Move',
+      marquee: 'Select',
+      brush: 'Draw',
+      eraser: 'Erase',
+      shape: 'Shape',
+      text: 'Text',
+      crop: 'Crop',
+      zoom: 'Zoom',
+      hand: 'Pan',
+      eyedropper: 'Color Picker',
+      gradient: 'Gradient',
+      fill: 'Fill'
+    };
+    return titles[toolName] || 'Options';
+  }
+  _renderControl(key, opt, tool, toolName = '') {
+    switch (opt.type) {
+      case 'slider':
+        return `
+          <div class="swp-submenu-group">
+            <label class="swp-submenu-label">${opt.label}</label>
+            <div class="swp-range-wrap">
+              <input type="range" class="swp-slider" data-opt-key="${key}"
+                min="${opt.min ?? 0}" max="${opt.max ?? 100}" value="${opt.value}">
+              <span class="swp-range-value">${opt.value}${opt.unit || ''}</span>
+            </div>
+          </div>
+        `;
+      case 'select':
+        if (toolName === 'crop' && key === 'aspectRatio') {
+          return this._renderChips(key, opt);
+        }
+        if ((opt.options?.length || 0) <= 3 && opt.type !== 'button') {
+          return this._renderChips(key, opt);
+        }
+        return `
+          <div class="swp-submenu-group">
+            <label class="swp-submenu-label">${opt.label}</label>
+            <select class="swp-select" data-opt-key="${key}">
+              ${opt.options.map(o => `
+                <option value="${o.value}" ${o.value === opt.value ? 'selected' : ''}>${o.label}</option>
+              `).join('')}
+            </select>
+          </div>
+        `;
+      case 'checkbox':
+        return `
+          <div class="swp-submenu-group">
+            <label class="swp-checkbox-label">
+              <input type="checkbox" data-opt-key="${key}" ${opt.value ? 'checked' : ''}>
+              <span>${opt.label}</span>
+            </label>
+          </div>
+        `;
+      case 'color':
+        return `
+          <div class="swp-submenu-group">
+            <label class="swp-submenu-label">${opt.label}</label>
+            <input type="color" class="swp-color-input" data-opt-key="${key}" value="${opt.value || '#000000'}">
+          </div>
+        `;
+      case 'button':
+        return `
+          <div class="swp-submenu-group">
+            <button class="swp-btn" data-opt-action="${key}">${opt.label}</button>
+          </div>
+        `;
+      default:
+        return '';
+    }
+  }
+  _renderChips(key, opt) {
+    return `
+      <div class="swp-submenu-group">
+        <label class="swp-submenu-label">${opt.label}</label>
+        <div class="swp-btn-group swp-btn-group-wrap" data-chip-group="${key}">
+          ${opt.options.map(o => `
+            <button type="button" class="swp-submenu-btn ${o.value === opt.value ? 'active' : ''}" data-opt-key="${key}" data-opt-value="${o.value}">
+              ${o.label}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  _bindControls(container, tool, options) {
+    // Sliders
+    container.querySelectorAll('input[type="range"][data-opt-key]').forEach(input => {
+      const key = input.dataset.optKey;
+      const valueEl = input.parentElement.querySelector('.swp-range-value');
+      const unit = options[key]?.unit || '';
+      input.addEventListener('input', e => {
+        const value = parseInt(e.target.value, 10);
+        if (valueEl) valueEl.textContent = `${value}${unit}`;
+        tool.setOption(key, value);
+      });
+    });
+
+    // Selects
+    container.querySelectorAll('select[data-opt-key]').forEach(select => {
+      const key = select.dataset.optKey;
+      select.addEventListener('change', e => {
+        tool.setOption(key, e.target.value);
+      });
+    });
+
+    // Checkboxes
+    container.querySelectorAll('input[type="checkbox"][data-opt-key]').forEach(checkbox => {
+      const key = checkbox.dataset.optKey;
+      checkbox.addEventListener('change', e => {
+        tool.setOption(key, e.target.checked);
+      });
+    });
+
+    // Colors
+    container.querySelectorAll('input[type="color"][data-opt-key]').forEach(color => {
+      const key = color.dataset.optKey;
+      color.addEventListener('input', e => {
+        tool.setOption(key, e.target.value);
+      });
+    });
+
+    // Chip groups
+    container.querySelectorAll('[data-chip-group]').forEach(group => {
+      const key = group.dataset.chipGroup;
+      group.querySelectorAll('.swp-submenu-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.swp-submenu-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const value = btn.dataset.optValue;
+          if (key === 'aspectRatio') {
+            if (value === 'free') {
+              tool.setAspectRatio(null);
+            } else {
+              const [w, h] = value.split(':').map(Number);
+              tool.setAspectRatio(Number.isFinite(w) && Number.isFinite(h) ? w / h : null);
+            }
+          } else {
+            const numeric = Number(value);
+            tool.setOption(key, value !== '' && !Number.isNaN(numeric) ? numeric : value);
+          }
+        });
+      });
+    });
+
+    // Buttons
+    container.querySelectorAll('[data-opt-action]').forEach(btn => {
+      const action = options[btn.dataset.optAction]?.action;
+      if (typeof action === 'function') {
+        btn.addEventListener('click', action);
+      }
+    });
+  }
+}
+/* harmony default export */ const ui_OptionsSheet = ((/* unused pure expression or super */ null && (OptionsSheet)));
 ;// ./src/js/ui/UI.js
 /**
  * SenangWebs Photobooth - UI Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
+
+
+
 
 
 
@@ -5749,13 +6387,113 @@ class UI {
     this.container = null;
     this.currentMenu = null;
     this.isFullscreen = false;
+    this.toast = null;
+    this.dialog = null;
+    this.optionsSheet = null;
+    this._isEmpty = true;
+    this._pushSeq = 0;
+    this._lastPreview = null;
   }
+
+  /**
+   * Tool rail definition: all tools + document operations
+   */
+  static RAIL_ITEMS = [{
+    id: 'move',
+    icon: 'cursor',
+    label: 'Move',
+    type: 'tool'
+  }, {
+    id: 'crop',
+    icon: 'crop',
+    label: 'Crop',
+    type: 'tool'
+  }, {
+    id: 'eraser',
+    icon: 'eraser',
+    label: 'Erase',
+    type: 'tool'
+  }, {
+    id: 'brush',
+    icon: 'brush',
+    label: 'Draw',
+    type: 'tool'
+  }, {
+    id: 'shape',
+    icon: 'shapes',
+    label: 'Shape',
+    type: 'tool'
+  }, {
+    id: 'text',
+    icon: 'text',
+    label: 'Text',
+    type: 'tool'
+  }, {
+    id: 'marquee',
+    icon: 'marquee',
+    label: 'Select',
+    type: 'tool'
+  }, {
+    id: 'fill',
+    icon: 'contrast',
+    label: 'Fill',
+    type: 'tool'
+  }, {
+    id: 'gradient',
+    icon: 'gradient',
+    label: 'Gradient',
+    type: 'tool'
+  }, {
+    id: 'eyedropper',
+    icon: 'crosshair',
+    label: 'Pick',
+    type: 'tool'
+  }, {
+    id: 'zoom',
+    icon: 'magnifying-glass',
+    label: 'Zoom',
+    type: 'tool'
+  }, {
+    id: 'hand',
+    icon: 'hand',
+    label: 'Pan',
+    type: 'tool'
+  }, {
+    id: 'rotate',
+    icon: 'arrow-path',
+    label: 'Rotate',
+    type: 'op'
+  }, {
+    id: 'flip',
+    icon: 'arrow-left-arrow-right',
+    label: 'Flip',
+    type: 'op'
+  }, {
+    id: 'resize',
+    icon: 'sliders-vertical',
+    label: 'Resize',
+    type: 'op'
+  }, {
+    id: 'adjust',
+    icon: 'sliders-horizontal',
+    label: 'Adjust',
+    type: 'op'
+  }, {
+    id: 'filter',
+    icon: 'magic-wand',
+    label: 'Filter',
+    type: 'op'
+  }];
   init(container) {
     this.container = container;
     this.container.classList.add('swp-app');
     this._handlers = {};
+    this.toast = new Toast(this.app, this.container);
+    this.dialog = new Dialog(this.app, this.container);
+    this.optionsSheet = new OptionsSheet(this.app, this);
     this.createLayout();
     this.bindEvents();
+    this.bindFileInputHelpers();
   }
   createLayout() {
     this.swpRoot = document.createElement('div');
@@ -5764,22 +6502,21 @@ class UI {
       <!-- Header Bar -->
       <div class="swp-header">
         <div class="swp-header-left">
-          <button class="swp-header-btn" data-action="load" title="Load Image">
+          <button class="swp-header-btn" data-action="load" title="Load Image" aria-label="Load image">
             <ss-icon icon="folder-open" thickness="2"></ss-icon>
             <span>Load</span>
           </button>
-          <div class="swp-download-dropdown">
-            <button class="swp-header-btn" data-action="toggle-download" title="Download">
-              <ss-icon icon="save" thickness="2"></ss-icon>
-              <span>Download</span>
-              <ss-icon icon="chevron-down" thickness="2" class="swp-dropdown-arrow"></ss-icon>
-            </button>
-            <div class="swp-dropdown-menu" hidden>
-              <button class="swp-dropdown-item" data-format="png">PNG</button>
-              <button class="swp-dropdown-item" data-format="jpeg">JPEG</button>
-              <button class="swp-dropdown-item" data-format="webp">WebP</button>
-            </div>
+          <button class="swp-header-btn" data-action="export" title="Export" aria-label="Export image">
+            <ss-icon icon="save" thickness="2"></ss-icon>
+            <span>Export</span>
+          </button>
+          <div class="swp-divider"></div>
+          <div class="swp-color-widget" title="Colors — click to edit, X to swap, D to reset" aria-label="Current colors">
+            <button type="button" class="swp-color-swatch swp-color-fg" data-action="fg-color" title="Foreground color"></button>
+            <button type="button" class="swp-color-swatch swp-color-bg" data-action="bg-color" title="Background color"></button>
           </div>
+          <input type="color" class="swp-color-proxy" id="fgColorInput" aria-label="Foreground color picker" tabindex="-1">
+          <input type="color" class="swp-color-proxy" id="bgColorInput" aria-label="Background color picker" tabindex="-1">
         </div>
         <div class="swp-header-center">
           <button class="swp-icon-btn" data-action="undo" title="Undo (Ctrl+Z)">
@@ -5813,6 +6550,24 @@ class UI {
       <!-- Main Workspace (full width canvas) -->
       <div class="swp-workspace"></div>
 
+      <!-- Empty State (drop / browse / paste) -->
+      <div class="swp-empty-state" role="button" tabindex="0" aria-label="Load an image to start editing">
+        <div class="swp-empty-inner">
+          <ss-icon icon="image" thickness="1.5"></ss-icon>
+          <div class="swp-empty-title">No image yet</div>
+          <div class="swp-empty-hint">Drag &amp; drop an image here, paste from clipboard, or</div>
+          <button class="swp-btn swp-btn-primary swp-empty-browse" type="button">Browse Files</button>
+        </div>
+      </div>
+
+      <!-- Busy Overlay -->
+      <div class="swp-busy-overlay" hidden>
+        <div class="swp-busy-box">
+          <div class="swp-spinner"></div>
+          <div class="swp-busy-label">Workingâ€¦</div>
+        </div>
+      </div>
+
       <!-- Side Panel (History / Layers) -->
       <div class="swp-side-panel" hidden>
         <div class="swp-side-panel-header">
@@ -5823,46 +6578,25 @@ class UI {
         </div>
         <div class="swp-side-panel-content"></div>
       </div>
-      <!-- Sub-menu Panel (contextual options) -->
+      <!-- Options Sheet (contextual panel) -->
       <div class="swp-submenu" hidden></div>
 
-      <!-- Bottom Menu Bar -->
-      <div class="swp-menu-bar">
-        <button class="swp-menu-item" data-menu="crop">
-          <ss-icon icon="crop" thickness="2"></ss-icon>
-          <span>Crop</span>
-        </button>
-        <button class="swp-menu-item" data-menu="rotate">
-          <ss-icon icon="arrow-path" thickness="2"></ss-icon>
-          <span>Rotate</span>
-        </button>
-        <button class="swp-menu-item" data-menu="flip">
-          <ss-icon icon="arrow-left-arrow-right" thickness="2"></ss-icon>
-          <span>Flip</span>
-        </button>
-        <button class="swp-menu-item" data-menu="resize">
-          <ss-icon icon="sliders-vertical" thickness="2"></ss-icon>
-          <span>Resize</span>
-        </button>
-        <button class="swp-menu-item" data-menu="draw">
-          <ss-icon icon="pencil" thickness="2"></ss-icon>
-          <span>Draw</span>
-        </button>
-        <button class="swp-menu-item" data-menu="shape">
-          <ss-icon icon="shapes" thickness="2"></ss-icon>
-          <span>Shape</span>
-        </button>
-        <button class="swp-menu-item" data-menu="text">
-          <ss-icon icon="text" thickness="2"></ss-icon>
-          <span>Text</span>
-        </button>
-        <button class="swp-menu-item" data-menu="filter">
-          <ss-icon icon="magic-wand" thickness="2"></ss-icon>
-          <span>Filter</span>
-        </button>
+      <!-- Tool Rail -->
+      <div class="swp-menu-bar" role="toolbar" aria-label="Tools">
+        ${UI.RAIL_ITEMS.map(item => `
+          <button class="swp-menu-item" data-menu="${item.id}" data-type="${item.type}" title="${item.label}">
+            <ss-icon icon="${item.icon}" thickness="2"></ss-icon>
+            <span>${item.label}</span>
+          </button>
+        `).join('')}
       </div>
     `;
     this.container.appendChild(this.swpRoot);
+
+    // Accessibility: propagate titles to aria-labels for icon-only buttons
+    this.swpRoot.querySelectorAll('[title]:not([aria-label])').forEach(el => {
+      el.setAttribute('aria-label', el.getAttribute('title'));
+    });
     this.bindHeaderActions();
     this.bindMenuActions();
   }
@@ -5875,26 +6609,14 @@ class UI {
       this.closeSidePanel();
     });
 
-    // Download dropdown handling
-    const downloadDropdown = this.swpRoot.querySelector('.swp-download-dropdown');
-    const dropdownMenu = downloadDropdown?.querySelector('.swp-dropdown-menu');
+    // Color inputs
+    const fgInput = this.swpRoot.querySelector('#fgColorInput');
+    const bgInput = this.swpRoot.querySelector('#bgColorInput');
+    fgInput?.addEventListener('input', e => this.app.colors.setForeground(e.target.value));
+    bgInput?.addEventListener('input', e => this.app.colors.setBackground(e.target.value));
 
-    // Format selection
-    dropdownMenu?.querySelectorAll('[data-format]').forEach(item => {
-      item.addEventListener('click', e => {
-        e.stopPropagation();
-        const format = item.dataset.format;
-        this.app.file.export(format);
-        dropdownMenu.hidden = true;
-      });
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', e => {
-      if (dropdownMenu && !downloadDropdown.contains(e.target)) {
-        dropdownMenu.hidden = true;
-      }
-    });
+    // Initialize color widget state
+    this.updateColorWidget();
     header.addEventListener('click', e => {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -5903,10 +6625,14 @@ class UI {
         case 'load':
           this.openFileDialog();
           break;
-        case 'toggle-download':
-          if (dropdownMenu) {
-            dropdownMenu.hidden = !dropdownMenu.hidden;
-          }
+        case 'export':
+          this.openExportModal();
+          break;
+        case 'fg-color':
+          this.swpRoot.querySelector('#fgColorInput')?.click();
+          break;
+        case 'bg-color':
+          this.swpRoot.querySelector('#bgColorInput')?.click();
           break;
         case 'undo':
           this.app.history.undo();
@@ -5921,7 +6647,7 @@ class UI {
           this.toggleSidePanel('layers');
           break;
         case 'reset':
-          this.resetCanvas();
+          this.confirmReset();
           break;
         case 'center':
           this.app.canvas.fitToScreen();
@@ -5941,49 +6667,59 @@ class UI {
       this.selectMenu(menu);
     });
   }
-  selectMenu(menu) {
-    // Toggle off if same menu clicked
-    if (this.currentMenu === menu) {
+  _getRailItem(id) {
+    return UI.RAIL_ITEMS.find(item => item.id === id) || null;
+  }
+  selectMenu(id) {
+    // Toggle off if same item clicked
+    if (this.currentMenu === id) {
       this.closeSubmenu();
       return;
     }
-    this.currentMenu = menu;
+    const item = this._getRailItem(id);
+    if (!item) return;
+    this.currentMenu = id;
     this.closeSidePanel();
 
-    // Update active state
-    this.swpRoot.querySelectorAll('.swp-menu-item').forEach(item => {
-      item.classList.toggle('active', item.dataset.menu === menu);
+    // Update rail active state
+    this.swpRoot.querySelectorAll('.swp-menu-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.menu === id);
     });
-
-    // Activate corresponding tool
-    this.activateToolForMenu(menu);
-
-    // Show submenu
-    this.showSubmenu(menu);
-  }
-  activateToolForMenu(menu) {
-    const toolMap = {
-      'crop': 'crop',
-      'rotate': 'move',
-      'flip': 'move',
-      'resize': 'move',
-      'draw': 'brush',
-      'shape': 'shape',
-      'text': 'text',
-      'filter': 'move'
-    };
-    const toolName = toolMap[menu];
-    if (toolName) {
-      this.app.tools.setTool(toolName);
+    if (item.type === 'tool') {
+      this.app.tools.setTool(id);
+      // Options sheet is rendered by the TOOL_SELECT listener
+    } else {
+      this.showSubmenu(id);
     }
   }
-  showSubmenu(menu) {
+
+  /**
+   * Show the options sheet for the given rail id (tool or op)
+   */
+  showOptionsFor(id) {
+    const item = this._getRailItem(id);
+    if (!item) return;
+    const submenu = this.swpRoot.querySelector('.swp-submenu');
+    if (!submenu) return;
+    if (item.type === 'tool') {
+      const tool = this.app.tools.getTool(id);
+      const rendered = this.optionsSheet.render(submenu, tool, id);
+      if (!rendered) {
+        // Tool has no options - keep sheet closed
+        submenu.hidden = true;
+        submenu.innerHTML = '';
+        return;
+      }
+    } else {
+      this.showSubmenu(id);
+      return;
+    }
+    submenu.hidden = false;
+  }
+  showSubmenu(id) {
     const submenu = this.swpRoot.querySelector('.swp-submenu');
     submenu.hidden = false;
-    switch (menu) {
-      case 'crop':
-        this.renderCropSubmenu(submenu);
-        break;
+    switch (id) {
       case 'rotate':
         this.renderRotateSubmenu(submenu);
         break;
@@ -5993,18 +6729,15 @@ class UI {
       case 'resize':
         this.renderResizeSubmenu(submenu);
         break;
-      case 'draw':
-        this.renderDrawSubmenu(submenu);
-        break;
-      case 'shape':
-        this.renderShapeSubmenu(submenu);
-        break;
-      case 'text':
-        this.renderTextSubmenu(submenu);
+      case 'adjust':
+        this.renderAdjustSubmenu(submenu);
         break;
       case 'filter':
         this.renderFilterSubmenu(submenu);
         break;
+      default:
+        submenu.hidden = true;
+        submenu.innerHTML = '';
     }
   }
   closeSubmenu() {
@@ -6016,58 +6749,6 @@ class UI {
     const submenu = this.swpRoot.querySelector('.swp-submenu');
     submenu.hidden = true;
     submenu.innerHTML = '';
-
-    // Reset tool to move
-    this.app.tools.setTool('move');
-  }
-  renderCropSubmenu(submenu) {
-    submenu.innerHTML = `
-      <div class="swp-submenu-content">
-        <div class="swp-submenu-title">Crop</div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Preset</label>
-          <div class="swp-btn-group">
-            <button class="swp-submenu-btn active" data-ratio="free">Free</button>
-            <button class="swp-submenu-btn" data-ratio="1:1">1:1</button>
-            <button class="swp-submenu-btn" data-ratio="4:3">4:3</button>
-            <button class="swp-submenu-btn" data-ratio="16:9">16:9</button>
-          </div>
-        </div>
-        <div class="swp-submenu-actions">
-          <button class="swp-btn" data-action="cancel">Cancel</button>
-          <button class="swp-btn swp-btn-primary" data-action="apply">Apply</button>
-        </div>
-      </div>
-    `;
-    this.bindCropSubmenuEvents(submenu);
-  }
-  bindCropSubmenuEvents(submenu) {
-    submenu.querySelectorAll('[data-ratio]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        submenu.querySelectorAll('[data-ratio]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const ratio = btn.dataset.ratio;
-        const cropTool = this.app.tools.getTool('crop');
-        if (cropTool) {
-          if (ratio === 'free') {
-            cropTool.setAspectRatio(null);
-          } else {
-            const [w, h] = ratio.split(':').map(Number);
-            cropTool.setAspectRatio(w / h);
-          }
-        }
-      });
-    });
-    submenu.querySelector('[data-action="cancel"]')?.addEventListener('click', () => {
-      this.closeSubmenu();
-    });
-    submenu.querySelector('[data-action="apply"]')?.addEventListener('click', () => {
-      const cropTool = this.app.tools.getTool('crop');
-      if (cropTool?.applyCrop) {
-        cropTool.applyCrop();
-      }
-      this.closeSubmenu();
-    });
   }
   renderRotateSubmenu(submenu) {
     submenu.innerHTML = `
@@ -6077,11 +6758,11 @@ class UI {
           <div class="swp-btn-group" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
             <button class="swp-submenu-btn" data-rotate="-90">
               <ss-icon icon="rotate-minus" thickness="2"></ss-icon>
-              <span>-90°</span>
+              <span>-90Â°</span>
             </button>
             <button class="swp-submenu-btn" data-rotate="90">
               <ss-icon icon="rotate-add" thickness="2"></ss-icon>
-              <span>+90°</span>
+              <span>+90Â°</span>
             </button>
           </div>
         </div>
@@ -6089,7 +6770,7 @@ class UI {
           <label class="swp-submenu-label">Custom Angle</label>
           <div class="swp-range-wrap">
             <input type="range" class="swp-slider" id="rotateAngle" min="-180" max="180" value="0">
-            <span class="swp-range-value">0°</span>
+            <span class="swp-range-value">0Â°</span>
           </div>
         </div>
         <div class="swp-submenu-actions">
@@ -6112,7 +6793,7 @@ class UI {
     const valueDisplay = submenu.querySelector('.swp-range-value');
     slider?.addEventListener('input', e => {
       currentAngle = parseInt(e.target.value);
-      valueDisplay.textContent = `${currentAngle}°`;
+      valueDisplay.textContent = `${currentAngle}Â°`;
     });
     submenu.querySelector('[data-action="cancel"]')?.addEventListener('click', () => {
       this.closeSubmenu();
@@ -6177,10 +6858,10 @@ class UI {
         <div class="swp-submenu-group">
           <label class="swp-submenu-label">Presets</label>
           <div class="swp-btn-group swp-btn-group-wrap">
-            <button class="swp-submenu-btn swp-preset-btn" data-width="1920" data-height="1080">1920×1080</button>
-            <button class="swp-submenu-btn swp-preset-btn" data-width="1280" data-height="720">1280×720</button>
-            <button class="swp-submenu-btn swp-preset-btn" data-width="800" data-height="600">800×600</button>
-            <button class="swp-submenu-btn swp-preset-btn" data-width="500" data-height="500">500×500</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="1920" data-height="1080">1920Ã—1080</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="1280" data-height="720">1280Ã—720</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="800" data-height="600">800Ã—600</button>
+            <button class="swp-submenu-btn swp-preset-btn" data-width="500" data-height="500">500Ã—500</button>
           </div>
         </div>
         <div class="swp-submenu-actions">
@@ -6228,198 +6909,10 @@ class UI {
     });
   }
   resizeCanvas(width, height) {
-    this.app.history.pushState(`Resize to ${width}×${height}`);
     this.app.canvas.resize(width, height);
     this.app.canvas.fitToScreen();
     this.app.canvas.render();
-  }
-  renderDrawSubmenu(submenu) {
-    const currentColor = this.app.colors.foreground;
-    const brushTool = this.app.tools.getTool('brush');
-    const currentSize = brushTool?.options?.size || 10;
-    submenu.innerHTML = `
-      <div class="swp-submenu-content">
-        <div class="swp-submenu-title">Draw</div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Brush Size</label>
-          <div class="swp-range-wrap">
-            <input type="range" class="swp-slider" id="brushSize" min="1" max="100" value="${currentSize}">
-            <span class="swp-range-value">${currentSize}px</span>
-          </div>
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Color</label>
-          <input type="color" class="swp-color-input" id="brushColor" value="${currentColor}">
-        </div>
-      </div>
-    `;
-    this.bindDrawSubmenuEvents(submenu);
-  }
-  bindDrawSubmenuEvents(submenu) {
-    const sizeSlider = submenu.querySelector('#brushSize');
-    const sizeValue = submenu.querySelector('.swp-range-value');
-    const colorInput = submenu.querySelector('#brushColor');
-    sizeSlider?.addEventListener('input', e => {
-      const size = parseInt(e.target.value);
-      sizeValue.textContent = `${size}px`;
-      const brushTool = this.app.tools.getTool('brush');
-      if (brushTool) {
-        brushTool.setOption('size', size);
-      }
-    });
-    colorInput?.addEventListener('input', e => {
-      this.app.colors.setForeground(e.target.value);
-    });
-  }
-  renderShapeSubmenu(submenu) {
-    const shapeTool = this.app.tools.getTool('shape');
-    const currentShape = shapeTool?.options?.shape || 'rectangle';
-    const currentFillColor = shapeTool?.options?.fillColor || this.app.colors.foreground;
-    const currentStrokeWidth = shapeTool?.options?.strokeWidth || 2;
-    submenu.innerHTML = `
-      <div class="swp-submenu-content">
-        <div class="swp-submenu-title">Shape</div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Shape Type</label>
-          <div class="swp-btn-group">
-            <button class="swp-submenu-btn ${currentShape === 'rectangle' ? 'active' : ''}" data-shape="rectangle">
-              <ss-icon icon="square" thickness="2"></ss-icon>
-            </button>
-            <button class="swp-submenu-btn ${currentShape === 'ellipse' ? 'active' : ''}" data-shape="ellipse">
-              <ss-icon icon="circle" thickness="2"></ss-icon>
-            </button>
-            <button class="swp-submenu-btn ${currentShape === 'line' ? 'active' : ''}" data-shape="line">
-              <ss-icon icon="minus" thickness="2"></ss-icon>
-            </button>
-          </div>
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Fill Color</label>
-          <input type="color" class="swp-color-input" id="shapeFill" value="${currentFillColor}">
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Stroke Width</label>
-          <div class="swp-range-wrap">
-            <input type="range" class="swp-slider" id="shapeStroke" min="0" max="20" value="${currentStrokeWidth}">
-            <span class="swp-range-value">2px</span>
-          </div>
-        </div>
-      </div>
-    `;
-    this.bindShapeSubmenuEvents(submenu);
-  }
-  bindShapeSubmenuEvents(submenu) {
-    submenu.querySelectorAll('[data-shape]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        submenu.querySelectorAll('[data-shape]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const shapeTool = this.app.tools.getTool('shape');
-        if (shapeTool) {
-          shapeTool.options.shape = btn.dataset.shape;
-        }
-      });
-    });
-    const fillInput = submenu.querySelector('#shapeFill');
-    fillInput?.addEventListener('input', e => {
-      const shapeTool = this.app.tools.getTool('shape');
-      if (shapeTool) {
-        shapeTool.options.fillColor = e.target.value;
-        shapeTool.options.filled = true;
-      }
-      this.app.colors.setForeground(e.target.value);
-    });
-    const strokeSlider = submenu.querySelector('#shapeStroke');
-    const strokeValue = submenu.querySelectorAll('.swp-range-value')[0];
-    strokeSlider?.addEventListener('input', e => {
-      const width = parseInt(e.target.value);
-      if (strokeValue) strokeValue.textContent = `${width}px`;
-      const shapeTool = this.app.tools.getTool('shape');
-      if (shapeTool) {
-        shapeTool.options.strokeWidth = width;
-        if (width > 0) {
-          shapeTool.options.stroked = true;
-          shapeTool.options.strokeColor = this.app.colors.foreground;
-        }
-      }
-    });
-  }
-  renderTextSubmenu(submenu) {
-    const currentColor = this.app.colors.foreground;
-    submenu.innerHTML = `
-      <div class="swp-submenu-content">
-        <div class="swp-submenu-title">Text</div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Font Size</label>
-          <div class="swp-range-wrap">
-            <input type="range" class="swp-slider" id="textSize" min="12" max="120" value="32">
-            <span class="swp-range-value">32px</span>
-          </div>
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Font</label>
-          <select class="swp-select" id="textFont">
-            <option value="Arial">Arial</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Impact">Impact</option>
-          </select>
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Color</label>
-          <input type="color" class="swp-color-input" id="textColor" value="${currentColor}">
-        </div>
-        <div class="swp-submenu-group">
-          <label class="swp-submenu-label">Style</label>
-          <div class="swp-btn-group">
-            <button class="swp-submenu-btn" data-style="bold">
-              <strong>B</strong>
-            </button>
-            <button class="swp-submenu-btn" data-style="italic">
-              <em>I</em>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    this.bindTextSubmenuEvents(submenu);
-  }
-  bindTextSubmenuEvents(submenu) {
-    const sizeSlider = submenu.querySelector('#textSize');
-    const sizeValue = submenu.querySelector('.swp-range-value');
-    sizeSlider?.addEventListener('input', e => {
-      const size = parseInt(e.target.value);
-      sizeValue.textContent = `${size}px`;
-      const textTool = this.app.tools.getTool('text');
-      if (textTool) {
-        textTool.setOption('fontSize', size);
-      }
-    });
-    const fontSelect = submenu.querySelector('#textFont');
-    fontSelect?.addEventListener('change', e => {
-      const textTool = this.app.tools.getTool('text');
-      if (textTool) {
-        textTool.setOption('fontFamily', e.target.value);
-      }
-    });
-    const colorInput = submenu.querySelector('#textColor');
-    colorInput?.addEventListener('input', e => {
-      this.app.colors.setForeground(e.target.value);
-    });
-    submenu.querySelectorAll('[data-style]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        btn.classList.toggle('active');
-        const textTool = this.app.tools.getTool('text');
-        if (textTool) {
-          if (btn.dataset.style === 'bold') {
-            textTool.setOption('fontWeight', btn.classList.contains('active') ? 'bold' : 'normal');
-          } else if (btn.dataset.style === 'italic') {
-            textTool.setOption('fontStyle', btn.classList.contains('active') ? 'italic' : 'normal');
-          }
-        }
-      });
-    });
+    this.app.history.pushState(`Resize to ${width}Ã—${height}`);
   }
   renderFilterSubmenu(submenu) {
     submenu.innerHTML = `
@@ -6432,31 +6925,35 @@ class UI {
               <span>None</span>
             </button>
             <button class="swp-filter-btn" data-filter="grayscale">
-              <div class="swp-filter-preview swp-filter-grayscale"></div>
+              <div class="swp-filter-preview"></div>
               <span>Grayscale</span>
             </button>
             <button class="swp-filter-btn" data-filter="sepia">
-              <div class="swp-filter-preview swp-filter-sepia"></div>
+              <div class="swp-filter-preview"></div>
               <span>Sepia</span>
             </button>
             <button class="swp-filter-btn" data-filter="invert">
-              <div class="swp-filter-preview swp-filter-invert"></div>
+              <div class="swp-filter-preview"></div>
               <span>Invert</span>
             </button>
             <button class="swp-filter-btn" data-filter="blur">
-              <div class="swp-filter-preview swp-filter-blur"></div>
+              <div class="swp-filter-preview"></div>
               <span>Blur</span>
             </button>
             <button class="swp-filter-btn" data-filter="brightness">
-              <div class="swp-filter-preview swp-filter-brightness"></div>
+              <div class="swp-filter-preview"></div>
               <span>Brighten</span>
             </button>
             <button class="swp-filter-btn" data-filter="contrast">
-              <div class="swp-filter-preview swp-filter-contrast"></div>
+              <div class="swp-filter-preview"></div>
               <span>Contrast</span>
             </button>
+            <button class="swp-filter-btn" data-filter="saturation">
+              <div class="swp-filter-preview"></div>
+              <span>Saturate</span>
+            </button>
             <button class="swp-filter-btn" data-filter="sharpen">
-              <div class="swp-filter-preview swp-filter-sharpen"></div>
+              <div class="swp-filter-preview"></div>
               <span>Sharpen</span>
             </button>
           </div>
@@ -6469,12 +6966,128 @@ class UI {
           </div>
         </div>
         <div class="swp-submenu-actions">
+          <button class="swp-btn" data-action="compare" title="Press and hold to compare with original">Compare</button>
           <button class="swp-btn" data-action="cancel">Cancel</button>
           <button class="swp-btn swp-btn-primary" data-action="apply">Apply</button>
         </div>
       </div>
     `;
+    this._generateFilterThumbnails(submenu);
     this.bindFilterSubmenuEvents(submenu);
+  }
+
+  /**
+   * Neutral default intensity per filter (used when a filter is selected)
+   */
+  _defaultIntensity(filterName) {
+    switch (filterName) {
+      case 'grayscale':
+      case 'sepia':
+      case 'invert':
+        return 100;
+      case 'blur':
+      case 'sharpen':
+        return 30;
+      case 'hueRotate':
+        return 0;
+      default:
+        return 50;
+    }
+  }
+
+  /**
+   * Thumbnail preview options per filter (for the filter grid)
+   */
+  _filterThumbOptions(filterName) {
+    switch (filterName) {
+      case 'grayscale':
+      case 'sepia':
+      case 'invert':
+        return {
+          value: 100
+        };
+      case 'blur':
+        return {
+          radius: 2
+        };
+      case 'sharpen':
+        return {
+          amount: 0.5
+        };
+      case 'brightness':
+      case 'contrast':
+        return {
+          value: 40
+        };
+      case 'saturation':
+        return {
+          value: 60
+        };
+      default:
+        return {};
+    }
+  }
+
+  /**
+   * Render live filter thumbnails from the current canvas composite
+   */
+  _generateFilterThumbnails(submenu) {
+    const work = this.app.canvas.workCanvas;
+    if (!work || !work.width || !work.height) return;
+    const TW = 96;
+    const TH = 96;
+    const scale = Math.min(TW / work.width, TH / work.height);
+    const w = Math.max(1, Math.round(work.width * scale));
+    const h = Math.max(1, Math.round(work.height * scale));
+    submenu.querySelectorAll('.swp-filter-btn').forEach(btn => {
+      const filter = btn.dataset.filter;
+      const previewEl = btn.querySelector('.swp-filter-preview');
+      if (!previewEl) return;
+      try {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(work, 0, 0, w, h);
+        if (filter === 'none') {
+          previewEl.style.backgroundImage = `url(${c.toDataURL()})`;
+          previewEl.style.backgroundSize = 'cover';
+          previewEl.style.backgroundPosition = 'center';
+          return;
+        }
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const filtered = this.app.filters.processFilter(filter, imgData, this._filterThumbOptions(filter));
+        ctx.putImageData(filtered, 0, 0);
+        previewEl.style.backgroundImage = `url(${c.toDataURL()})`;
+        previewEl.style.backgroundSize = 'cover';
+        previewEl.style.backgroundPosition = 'center';
+      } catch (err) {
+        console.error('SWP: filter thumbnail failed', err);
+      }
+    });
+  }
+
+  /**
+   * Bind compare (press & hold) behavior to a button
+   */
+  _bindCompareButton(btn, getLastPreview) {
+    if (!btn) return;
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const last = getLastPreview();
+      if (last) {
+        this.app.filters.cancelPreview();
+      }
+    });
+    const restore = () => {
+      const last = getLastPreview();
+      if (last) {
+        this.app.filters.previewFilter(last.filterName, last.options);
+      }
+    };
+    btn.addEventListener('pointerup', restore);
+    btn.addEventListener('pointerleave', restore);
+    btn.addEventListener('pointercancel', restore);
   }
   bindFilterSubmenuEvents(submenu) {
     let selectedFilter = 'none';
@@ -6482,18 +7095,31 @@ class UI {
     const intensityGroup = submenu.querySelector('.swp-filter-intensity');
     const intensitySlider = submenu.querySelector('#filterIntensity');
     const intensityValue = submenu.querySelector('.swp-filter-intensity .swp-range-value');
+    const getCurrentOptions = () => this._convertIntensity(selectedFilter, intensity);
+    const getLastPreview = () => selectedFilter !== 'none' ? {
+      filterName: selectedFilter,
+      options: getCurrentOptions()
+    } : null;
     submenu.querySelectorAll('.swp-filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         submenu.querySelectorAll('.swp-filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedFilter = btn.dataset.filter;
 
-        // Show/hide intensity slider
+        // Show/hide intensity slider with neutral default per filter
         if (selectedFilter !== 'none') {
+          intensity = this._defaultIntensity(selectedFilter);
+          if (intensitySlider) intensitySlider.value = intensity;
+          if (intensityValue) intensityValue.textContent = `${intensity}%`;
           intensityGroup.hidden = false;
-          this.previewFilter(selectedFilter, intensity);
+          this.app.filters.previewFilter(selectedFilter, getCurrentOptions());
+          this._lastPreview = {
+            filterName: selectedFilter,
+            options: getCurrentOptions()
+          };
         } else {
           intensityGroup.hidden = true;
+          this._lastPreview = null;
           this.app.filters.cancelPreview();
         }
       });
@@ -6502,16 +7128,22 @@ class UI {
       intensity = parseInt(e.target.value);
       intensityValue.textContent = `${intensity}%`;
       if (selectedFilter !== 'none') {
-        this.previewFilter(selectedFilter, intensity);
+        this.app.filters.previewFilter(selectedFilter, getCurrentOptions());
+        this._lastPreview = {
+          filterName: selectedFilter,
+          options: getCurrentOptions()
+        };
       }
     });
+    this._bindCompareButton(submenu.querySelector('[data-action="compare"]'), getLastPreview);
     submenu.querySelector('[data-action="cancel"]')?.addEventListener('click', () => {
       this.app.filters.cancelPreview();
       this.closeSubmenu();
     });
     submenu.querySelector('[data-action="apply"]')?.addEventListener('click', () => {
       if (selectedFilter !== 'none') {
-        this.applyFilter(selectedFilter, intensity);
+        this.app.filters.applyFilter(selectedFilter, getCurrentOptions());
+        this._lastPreview = null;
       }
       this.closeSubmenu();
     });
@@ -6521,7 +7153,6 @@ class UI {
   rotateCanvas(angle) {
     const layers = this.app.layers.getLayers();
     if (layers.length === 0) return;
-    this.app.history.pushState(`Rotate ${angle}°`);
     const rad = angle * Math.PI / 180;
     const sin = Math.abs(Math.sin(rad));
     const cos = Math.abs(Math.cos(rad));
@@ -6549,11 +7180,11 @@ class UI {
       this.app.canvas.resize(this.app.canvas.height, this.app.canvas.width);
     }
     this.app.canvas.render();
+    this.app.history.pushState(`Rotate ${angle}Â°`);
   }
   flipCanvas(direction) {
     const layers = this.app.layers.getLayers();
     if (layers.length === 0) return;
-    this.app.history.pushState(`Flip ${direction}`);
     for (const layer of layers) {
       if (!layer.canvas || !layer.ctx) continue;
       const tempCanvas = document.createElement('canvas');
@@ -6572,66 +7203,166 @@ class UI {
       layer.ctx.drawImage(tempCanvas, 0, 0);
     }
     this.app.canvas.render();
+    this.app.history.pushState(`Flip ${direction}`);
   }
-  previewFilter(filterName, intensity) {
-    // Convert 0-100 intensity to appropriate filter values
-    let options = {};
+
+  /**
+   * Convert 0-100 intensity to filter-specific options
+   */
+  _convertIntensity(filterName, intensity) {
     switch (filterName) {
       case 'brightness':
-        // Convert 0-100 to -128 to 128 range (50 = 0 change)
-        options.value = Math.round((intensity - 50) * 2.56);
-        break;
       case 'contrast':
         // Convert 0-100 to -128 to 128 range (50 = 0 change)
-        options.value = Math.round((intensity - 50) * 2.56);
-        break;
+        return {
+          value: Math.round((intensity - 50) * 2.56)
+        };
       case 'saturation':
         // Convert 0-100 to -100 to 100 range (50 = 0 change)
-        options.value = (intensity - 50) * 2;
-        break;
+        return {
+          value: (intensity - 50) * 2
+        };
       case 'blur':
         // Convert 0-100 to 1-10 radius
-        options.radius = Math.max(1, Math.round(intensity / 10));
-        break;
+        return {
+          radius: Math.max(1, Math.round(intensity / 10))
+        };
       case 'sharpen':
         // Convert 0-100 to 0-2 amount
-        options.amount = intensity / 50;
-        break;
+        return {
+          amount: intensity / 50
+        };
       case 'hueRotate':
         // Convert 0-100 to 0-360 degrees
-        options.angle = intensity * 3.6;
-        break;
+        return {
+          angle: intensity * 3.6
+        };
+      case 'adjust':
+        return intensity;
       default:
-        options.value = intensity;
+        // grayscale / sepia / invert use raw intensity as value
+        return {
+          value: intensity
+        };
     }
-    this.app.filters.previewFilter(filterName, options);
+  }
+
+  /**
+   * Render the Adjust panel with live per-channel sliders
+   */
+  renderAdjustSubmenu(submenu) {
+    submenu.innerHTML = `
+      <div class="swp-submenu-content">
+        <div class="swp-submenu-title">Adjust</div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Brightness <span class="swp-hint">(double-tap to reset)</span></label>
+          <div class="swp-range-wrap">
+            <input type="range" class="swp-slider" data-adjust="brightness" min="-100" max="100" value="0">
+            <span class="swp-range-value">0</span>
+          </div>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Contrast</label>
+          <div class="swp-range-wrap">
+            <input type="range" class="swp-slider" data-adjust="contrast" min="-100" max="100" value="0">
+            <span class="swp-range-value">0</span>
+          </div>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Saturation</label>
+          <div class="swp-range-wrap">
+            <input type="range" class="swp-slider" data-adjust="saturation" min="-100" max="100" value="0">
+            <span class="swp-range-value">0</span>
+          </div>
+        </div>
+        <div class="swp-submenu-actions">
+          <button class="swp-btn" data-action="compare" title="Press and hold to compare with original">Compare</button>
+          <button class="swp-btn" data-action="cancel">Cancel</button>
+          <button class="swp-btn swp-btn-primary" data-action="apply">Apply</button>
+        </div>
+      </div>
+    `;
+    this.bindAdjustSubmenuEvents(submenu);
+  }
+  bindAdjustSubmenuEvents(submenu) {
+    const values = {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0
+    };
+    let rafId = null;
+    const currentOptions = () => ({
+      ...values
+    });
+    const getLastPreview = () => ({
+      filterName: 'adjust',
+      options: currentOptions()
+    });
+    const schedulePreview = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        this.app.filters.previewFilter('adjust', currentOptions());
+        this._lastPreview = {
+          filterName: 'adjust',
+          options: currentOptions()
+        };
+      });
+    };
+    submenu.querySelectorAll('[data-adjust]').forEach(slider => {
+      const key = slider.dataset.adjust;
+      const valueEl = slider.parentElement.querySelector('.swp-range-value');
+      slider.addEventListener('input', e => {
+        values[key] = parseInt(e.target.value, 10);
+        if (valueEl) valueEl.textContent = `${values[key]}`;
+        schedulePreview();
+      });
+
+      // Double-tap / double-click slider to reset
+      slider.addEventListener('dblclick', () => {
+        values[key] = 0;
+        slider.value = 0;
+        if (valueEl) valueEl.textContent = '0';
+        schedulePreview();
+      });
+    });
+    this._bindCompareButton(submenu.querySelector('[data-action="compare"]'), getLastPreview);
+    submenu.querySelector('[data-action="cancel"]')?.addEventListener('click', () => {
+      this.app.filters.cancelPreview();
+      this._lastPreview = null;
+      this.closeSubmenu();
+    });
+    submenu.querySelector('[data-action="apply"]')?.addEventListener('click', () => {
+      const opts = currentOptions();
+      const hasChange = opts.brightness !== 0 || opts.contrast !== 0 || opts.saturation !== 0;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (hasChange) {
+        this.app.filters.applyFilter('adjust', opts);
+        this._lastPreview = null;
+      } else {
+        this.app.filters.cancelPreview();
+      }
+      this.closeSubmenu();
+    });
+  }
+  previewFilter(filterName, intensity) {
+    this.app.filters.previewFilter(filterName, this._convertIntensity(filterName, intensity));
   }
   applyFilter(filterName, intensity) {
-    // Convert 0-100 intensity to appropriate filter values
-    let options = {};
-    switch (filterName) {
-      case 'brightness':
-        options.value = Math.round((intensity - 50) * 2.56);
-        break;
-      case 'contrast':
-        options.value = Math.round((intensity - 50) * 2.56);
-        break;
-      case 'saturation':
-        options.value = (intensity - 50) * 2;
-        break;
-      case 'blur':
-        options.radius = Math.max(1, Math.round(intensity / 10));
-        break;
-      case 'sharpen':
-        options.amount = intensity / 50;
-        break;
-      case 'hueRotate':
-        options.angle = intensity * 3.6;
-        break;
-      default:
-        options.value = intensity;
+    this.app.filters.applyFilter(filterName, this._convertIntensity(filterName, intensity));
+  }
+  async confirmReset() {
+    if (this._isEmpty) {
+      this.resetCanvas();
+      return;
     }
-    this.app.filters.applyFilter(filterName, options);
+    const ok = await this.dialog.confirm({
+      title: 'Reset canvas?',
+      message: 'This will discard the current document and all your edits. This cannot be undone.',
+      confirmLabel: 'Reset',
+      danger: true
+    });
+    if (ok) this.resetCanvas();
   }
   resetCanvas() {
     this.app.file.newDocument({
@@ -6640,19 +7371,299 @@ class UI {
     });
     this.closeSubmenu();
   }
+  bindFileInputHelpers() {
+    const workspace = this.getWorkspace();
+    const emptyState = this.swpRoot.querySelector('.swp-empty-state');
+
+    // Empty state click / keyboard activation
+    emptyState?.addEventListener('click', e => {
+      if (e.target.closest('.swp-empty-browse') || e.target === emptyState || e.target.closest('.swp-empty-inner')) {
+        this.openFileDialog();
+      }
+    });
+    emptyState?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.openFileDialog();
+      }
+    });
+
+    // Drag & drop
+    this._onDragOver = e => {
+      e.preventDefault();
+      emptyState?.classList.add('swp-drop-hover');
+      workspace?.classList.add('swp-drag-over');
+    };
+    this._onDragLeave = () => {
+      emptyState?.classList.remove('swp-drop-hover');
+      workspace?.classList.remove('swp-drag-over');
+    };
+    this._onDrop = e => {
+      e.preventDefault();
+      emptyState?.classList.remove('swp-drop-hover');
+      workspace?.classList.remove('swp-drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) this.loadFile(file);
+    };
+    this.container.addEventListener('dragover', this._onDragOver);
+    this.container.addEventListener('dragleave', this._onDragLeave);
+    this.container.addEventListener('drop', this._onDrop);
+
+    // Paste image from OS clipboard
+    this._onPaste = e => {
+      if (this.dialog?.isOpen) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            this.loadFile(file);
+          }
+          break;
+        }
+      }
+    };
+    document.addEventListener('paste', this._onPaste);
+  }
+
+  /**
+   * Load a dropped/pasted/browsed file (image or .sws project)
+   * @param {File} file
+   */
+  async loadFile(file) {
+    try {
+      if (file.name?.toLowerCase().endsWith('.sws')) {
+        await this.app.file.openProject(file);
+        this.toast.success(`Project "${this.app.file.projectName}" opened`);
+      } else if (file.type.startsWith('image/')) {
+        await this.withBusy('Loading imageâ€¦', async () => {
+          const url = URL.createObjectURL(file);
+          await this.app.loadImage(url);
+          URL.revokeObjectURL(url);
+        });
+        this.toast.success('Image loaded');
+      } else {
+        this.toast.error('Unsupported file type');
+      }
+    } catch (err) {
+      console.error('SWP: Failed to load file', err);
+      this.toast.error('Failed to load file');
+    }
+  }
+
+  /**
+   * Ask for confirmation before replacing existing content
+   * @returns {Promise<boolean>}
+   */
+  async confirmReplaceIfContent() {
+    if (this._isEmpty) return true;
+    return this.dialog.confirm({
+      title: 'Replace current work?',
+      message: 'Loading a new image will replace the current document. Your changes will be lost.',
+      confirmLabel: 'Replace',
+      danger: true
+    });
+  }
+
+  // Busy indicator
+  showBusy(label = 'Workingâ€¦') {
+    const overlay = this.swpRoot.querySelector('.swp-busy-overlay');
+    if (!overlay) return;
+    overlay.querySelector('.swp-busy-label').textContent = label;
+    overlay.hidden = false;
+  }
+  hideBusy() {
+    const overlay = this.swpRoot.querySelector('.swp-busy-overlay');
+    if (overlay) overlay.hidden = true;
+  }
+
+  /**
+   * Run an operation behind the busy overlay (lets the spinner paint first)
+   * @param {string} label
+   * @param {Function} fn - Async operation
+   */
+  async withBusy(label, fn) {
+    this.showBusy(label);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    try {
+      return await fn();
+    } finally {
+      this.hideBusy();
+    }
+  }
+
+  // Empty state management
+  _setEmptyState(empty) {
+    this._isEmpty = empty;
+    const emptyState = this.swpRoot.querySelector('.swp-empty-state');
+    if (emptyState) emptyState.hidden = !empty;
+  }
+  _scheduleEmptyCheck() {
+    const seqAtSchedule = this._pushSeq;
+    // Delay so synchronous follow-up content (e.g. image load right after
+    // newDocument) is visible before deciding the document is empty
+    setTimeout(() => {
+      // A real content push after scheduling means the document has content
+      if (seqAtSchedule !== this._pushSeq) {
+        this._setEmptyState(false);
+        return;
+      }
+      const layers = this.app.layers.getLayers();
+      const isFresh = this.app.history.count <= 1; // only 'Initial State'
+      this._setEmptyState(layers.length === 0 || isFresh);
+    }, 50);
+  }
+
+  /**
+   * Export modal: format, quality, filename + project save
+   */
+  openExportModal() {
+    if (this._exportOverlay?.isConnected) return;
+    const formats = [{
+      id: 'png',
+      label: 'PNG',
+      lossless: true
+    }, {
+      id: 'jpeg',
+      label: 'JPEG',
+      lossless: false
+    }, {
+      id: 'webp',
+      label: 'WebP',
+      lossless: false
+    }];
+    let format = 'png';
+    let quality = 92;
+    let estimateTimer = null;
+    const overlay = document.createElement('div');
+    overlay.className = 'swp-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="swp-dialog swp-export-dialog" role="dialog" aria-modal="true" aria-label="Export image">
+        <div class="swp-dialog-title">Export Image</div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Format</label>
+          <div class="swp-btn-group" id="exportFormats">
+            ${formats.map(f => `
+              <button type="button" class="swp-submenu-btn ${f.id === 'png' ? 'active' : ''}" data-format-id="${f.id}">${f.label}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="swp-submenu-group" id="exportQualityGroup" hidden>
+          <label class="swp-submenu-label">Quality</label>
+          <div class="swp-range-wrap">
+            <input type="range" class="swp-slider" id="exportQuality" min="10" max="100" value="${quality}">
+            <span class="swp-range-value">${quality}%</span>
+          </div>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">File name</label>
+          <input type="text" class="swp-input" id="exportName" value="${this.app.file.projectName.replace(/"/g, '&quot;')}" maxlength="80">
+        </div>
+        <div class="swp-export-info" id="exportInfo">
+          ${this.app.canvas.width} Ã— ${this.app.canvas.height} px
+        </div>
+        <div class="swp-dialog-actions swp-export-actions">
+          <button type="button" class="swp-btn" id="exportSaveProject">Save Project (.sws)</button>
+          <button type="button" class="swp-btn" id="exportCancel">Cancel</button>
+          <button type="button" class="swp-btn swp-btn-primary" id="exportConfirm">Export</button>
+        </div>
+      </div>
+    `;
+    const close = () => {
+      if (estimateTimer) clearTimeout(estimateTimer);
+      document.removeEventListener('keydown', onKey, true);
+      overlay.classList.add('swp-dialog-out');
+      setTimeout(() => overlay.remove(), 150);
+      this._exportOverlay = null;
+    };
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    const qualityGroup = overlay.querySelector('#exportQualityGroup');
+    const qualitySlider = overlay.querySelector('#exportQuality');
+    const qualityValue = overlay.querySelector('#exportQualityGroup .swp-range-value');
+    const infoEl = overlay.querySelector('#exportInfo');
+    const nameInput = overlay.querySelector('#exportName');
+    const updateQualityVisibility = () => {
+      qualityGroup.hidden = format === 'png';
+    };
+    const updateEstimate = () => {
+      if (estimateTimer) clearTimeout(estimateTimer);
+      infoEl.textContent = `${this.app.canvas.width} Ã— ${this.app.canvas.height} px`;
+      if (format === 'png') return;
+      estimateTimer = setTimeout(async () => {
+        try {
+          const mimeType = `image/${format}`;
+          const dataURL = this.app.canvas.toDataURL(mimeType, quality / 100);
+          const bytes = Math.round((dataURL.length - 'data:;base64,'.length) * 0.75);
+          const kb = bytes / 1024;
+          const sizeText = kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${Math.round(kb)} KB`;
+          infoEl.textContent = `${this.app.canvas.width} Ã— ${this.app.canvas.height} px Â· ~${sizeText}`;
+        } catch (err) {
+          // Estimate is best-effort only
+        }
+      }, 350);
+    };
+    overlay.querySelectorAll('[data-format-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlay.querySelectorAll('[data-format-id]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        format = btn.dataset.formatId;
+        updateQualityVisibility();
+        updateEstimate();
+      });
+    });
+    qualitySlider?.addEventListener('input', e => {
+      quality = parseInt(e.target.value, 10);
+      if (qualityValue) qualityValue.textContent = `${quality}%`;
+      updateEstimate();
+    });
+    overlay.querySelector('#exportCancel').addEventListener('click', close);
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) close();
+    });
+    overlay.querySelector('#exportSaveProject').addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      if (name) this.app.file.setProjectName(name);
+      try {
+        await this.withBusy('Saving projectâ€¦', () => this.app.file.save());
+        this.toast.success(`Project saved as ${this.app.file.projectName}.sws`);
+        close();
+      } catch (err) {
+        console.error('SWP: Save project failed', err);
+        this.toast.error('Failed to save project');
+      }
+    });
+    overlay.querySelector('#exportConfirm').addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      try {
+        await this.withBusy(`Exporting ${format.toUpperCase()}â€¦`, () => this.app.file.export(format, quality / 100, name));
+        this.toast.success(`Exported ${name || this.app.file.projectName}.${format}`);
+        close();
+      } catch (err) {
+        console.error('SWP: Export failed', err);
+        this.toast.error('Export failed');
+      }
+    });
+    this.container.appendChild(overlay);
+    this._exportOverlay = overlay;
+    requestAnimationFrame(() => overlay.classList.add('swp-dialog-in'));
+    overlay.querySelector('#exportConfirm').focus();
+  }
   openFileDialog() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/*,.sws';
     input.onchange = e => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          this.app.loadImage(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
+      if (file) this.loadFile(file);
     };
     input.click();
   }
@@ -6735,25 +7746,63 @@ class UI {
   renderLayersSidePanel(content) {
     const layers = this.app.layers.getLayers().slice().reverse();
     const active = this.app.layers.getActiveLayer();
+    const blendModes = [['source-over', 'Normal'], ['multiply', 'Multiply'], ['screen', 'Screen'], ['overlay', 'Overlay'], ['darken', 'Darken'], ['lighten', 'Lighten'], ['color-dodge', 'Color Dodge'], ['color-burn', 'Color Burn'], ['hard-light', 'Hard Light'], ['soft-light', 'Soft Light'], ['difference', 'Difference'], ['exclusion', 'Exclusion'], ['hue', 'Hue'], ['saturation', 'Saturation'], ['color', 'Color'], ['luminosity', 'Luminosity']];
     content.innerHTML = `
       <div class="swp-panel-list">
         ${layers.length === 0 ? '<div class="swp-panel-empty">No layers</div>' : ''}
         ${layers.map(layer => `
           <div class="swp-panel-item ${layer.id === active?.id ? 'active' : ''}" data-id="${layer.id}">
-            <button class="swp-layer-vis-btn ${layer.visible ? 'visible' : ''}" data-action="toggle-visibility">
+            <button class="swp-layer-vis-btn ${layer.visible ? 'visible' : ''}" data-action="toggle-visibility" title="Toggle visibility">
               <ss-icon icon="${layer.visible ? 'eye' : 'eye-slash'}" thickness="2"></ss-icon>
             </button>
             <span class="swp-layer-name">${layer.name}</span>
-            <span class="swp-layer-opacity">${layer.opacity}%</span>
+            <button class="swp-layer-lock-btn ${layer.locked ? 'locked' : ''}" data-action="toggle-lock" title="${layer.locked ? 'Unlock' : 'Lock'}">
+              <ss-icon icon="${layer.locked ? 'lock-closed' : 'lock-open'}" thickness="2"></ss-icon>
+            </button>
           </div>
         `).join('')}
       </div>
+      ${active ? `
+      <div class="swp-layer-controls">
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Opacity</label>
+          <div class="swp-range-wrap">
+            <input type="range" class="swp-slider" id="layerOpacity" min="0" max="100" value="${active.opacity}">
+            <span class="swp-range-value">${active.opacity}%</span>
+          </div>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Blend Mode</label>
+          <select class="swp-select" id="layerBlend">
+            ${blendModes.map(([value, label]) => `
+              <option value="${value}" ${active.blendMode === value ? 'selected' : ''}>${label}</option>
+            `).join('')}
+          </select>
+        </div>
+        <div class="swp-submenu-group">
+          <label class="swp-submenu-label">Name</label>
+          <input type="text" class="swp-input" id="layerName" value="${active.name.replace(/"/g, '&quot;')}" maxlength="50">
+        </div>
+      </div>
+      ` : ''}
       <div class="swp-panel-actions">
-        <button class="swp-btn swp-btn-sm" data-action="add-layer">
-          <ss-icon icon="plus" thickness="2"></ss-icon> Add
+        <button class="swp-btn swp-btn-sm" data-action="add-layer" title="Add layer">
+          <ss-icon icon="plus" thickness="2"></ss-icon>
         </button>
-        <button class="swp-btn swp-btn-sm swp-btn-danger" data-action="delete-layer">
-          <ss-icon icon="trash" thickness="2"></ss-icon> Delete
+        <button class="swp-btn swp-btn-sm" data-action="layer-up" title="Move up">
+          <ss-icon icon="arrow-up" thickness="2"></ss-icon>
+        </button>
+        <button class="swp-btn swp-btn-sm" data-action="layer-down" title="Move down">
+          <ss-icon icon="arrow-down" thickness="2"></ss-icon>
+        </button>
+        <button class="swp-btn swp-btn-sm" data-action="duplicate-layer" title="Duplicate layer">
+          <ss-icon icon="document-duplicate" thickness="2"></ss-icon>
+        </button>
+        <button class="swp-btn swp-btn-sm" data-action="merge-down" title="Merge down">
+          <ss-icon icon="arrow-down" thickness="2"></ss-icon><ss-icon icon="layer-stacks" thickness="2"></ss-icon>
+        </button>
+        <button class="swp-btn swp-btn-sm swp-btn-danger" data-action="delete-layer" title="Delete layer">
+          <ss-icon icon="trash" thickness="2"></ss-icon>
         </button>
       </div>
     `;
@@ -6774,6 +7823,32 @@ class UI {
           this.renderLayersSidePanel(content);
         }
       });
+      item.querySelector('[data-action="toggle-lock"]')?.addEventListener('click', e => {
+        e.stopPropagation();
+        const layer = this.app.layers.getLayer(item.dataset.id);
+        if (layer) {
+          this.app.layers.setLayerLocked(item.dataset.id, !layer.locked);
+          this.renderLayersSidePanel(content);
+        }
+      });
+    });
+
+    // Active layer controls
+    const opacitySlider = content.querySelector('#layerOpacity');
+    const opacityValue = content.querySelector('.swp-layer-controls .swp-range-value');
+    opacitySlider?.addEventListener('input', e => {
+      const opacity = parseInt(e.target.value, 10);
+      if (opacityValue) opacityValue.textContent = `${opacity}%`;
+      this.app.layers.setLayerOpacity(active.id, opacity);
+    });
+    const blendSelect = content.querySelector('#layerBlend');
+    blendSelect?.addEventListener('change', e => {
+      this.app.layers.setLayerBlendMode(active.id, e.target.value);
+    });
+    const nameInput = content.querySelector('#layerName');
+    nameInput?.addEventListener('change', e => {
+      const name = e.target.value.trim();
+      if (name) this.app.layers.renameLayer(active.id, name);
     });
 
     // Action buttons
@@ -6781,9 +7856,32 @@ class UI {
       this.app.layers.addLayer();
       this.renderLayersSidePanel(content);
     });
-    content.querySelector('[data-action="delete-layer"]')?.addEventListener('click', () => {
+    content.querySelector('[data-action="layer-up"]')?.addEventListener('click', () => {
+      this.app.layers.moveLayerUp(active.id);
+      this.renderLayersSidePanel(content);
+    });
+    content.querySelector('[data-action="layer-down"]')?.addEventListener('click', () => {
+      this.app.layers.moveLayerDown(active.id);
+      this.renderLayersSidePanel(content);
+    });
+    content.querySelector('[data-action="duplicate-layer"]')?.addEventListener('click', () => {
+      this.app.layers.duplicateLayer(active.id);
+      this.renderLayersSidePanel(content);
+    });
+    content.querySelector('[data-action="merge-down"]')?.addEventListener('click', () => {
+      this.app.layers.mergeDown(active.id);
+      this.renderLayersSidePanel(content);
+    });
+    content.querySelector('[data-action="delete-layer"]')?.addEventListener('click', async () => {
       const activeLayer = this.app.layers.getActiveLayer();
       if (activeLayer) {
+        const ok = await this.dialog.confirm({
+          title: 'Delete layer?',
+          message: `"${activeLayer.name}" will be removed. You can undo this with Ctrl+Z.`,
+          confirmLabel: 'Delete',
+          danger: true
+        });
+        if (!ok) return;
         this.app.layers.removeLayer(activeLayer.id);
         this.renderLayersSidePanel(content);
       }
@@ -6791,7 +7889,13 @@ class UI {
   }
   bindEvents() {
     // History events - update buttons and panel
-    this.app.events.on(Events.HISTORY_PUSH, () => {
+    this.app.events.on(Events.HISTORY_PUSH, data => {
+      // 'Initial State' is the fresh-document baseline, not user content
+      const isInitial = !data || data.actionName === 'Initial State';
+      if (!isInitial) {
+        this._pushSeq++;
+        this._setEmptyState(false);
+      }
       this.updateHistoryButtons();
       this.updateHistoryPanel();
     });
@@ -6813,6 +7917,49 @@ class UI {
     this.app.events.on(Events.LAYER_RENAME, () => this.updateLayersPanel());
     this.app.events.on(Events.LAYER_REORDER, () => this.updateLayersPanel());
     this.app.events.on(Events.LAYER_OPACITY, () => this.updateLayersPanel());
+    this.app.events.on(Events.LAYER_REMOVE, () => this._scheduleEmptyCheck());
+    this.app.events.on(Events.DOCUMENT_NEW, () => this._scheduleEmptyCheck());
+
+    // Tool changes (rail click or keyboard shortcut) sync rail + options sheet
+    this.app.events.on(Events.TOOL_SELECT, ({
+      tool
+    }) => {
+      if (!this._getRailItem(tool)) return;
+      this.currentMenu = tool;
+      this.swpRoot.querySelectorAll('.swp-menu-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.menu === tool);
+      });
+      this.showOptionsFor(tool);
+    });
+
+    // Color changes sync the header color widget
+    this.app.events.on(Events.COLOR_FOREGROUND, () => this.updateColorWidget());
+    this.app.events.on(Events.COLOR_BACKGROUND, () => this.updateColorWidget());
+    this.app.events.on(Events.COLOR_SWAP, () => this.updateColorWidget());
+  }
+
+  /**
+   * Reflect current foreground/background colors in the header widget
+   */
+  updateColorWidget() {
+    if (!this.swpRoot) return;
+    const fg = this.swpRoot.querySelector('.swp-color-fg');
+    const bg = this.swpRoot.querySelector('.swp-color-bg');
+    const fgInput = this.swpRoot.querySelector('#fgColorInput');
+    const bgInput = this.swpRoot.querySelector('#bgColorInput');
+    const colors = this.app.colors;
+    if (fg) {
+      fg.style.backgroundColor = colors.foreground;
+      fg.title = `Foreground: ${colors.foreground} (X to swap, D to reset)`;
+      fg.setAttribute('aria-label', fg.title);
+    }
+    if (bg) {
+      bg.style.backgroundColor = colors.background;
+      bg.title = `Background: ${colors.background} (X to swap, D to reset)`;
+      bg.setAttribute('aria-label', bg.title);
+    }
+    if (fgInput) fgInput.value = colors.foreground;
+    if (bgInput) bgInput.value = colors.background;
   }
   updateHistoryButtons() {
     const undoBtn = this.swpRoot.querySelector('[data-action="undo"]');
@@ -6845,7 +7992,12 @@ class UI {
     }
   }
   updateToolbox() {
-    // No-op in simplified UI
+    // Refresh the options sheet for the current tool (called after tool activation)
+    if (!this.swpRoot || !this.currentMenu) return;
+    const item = this._getRailItem(this.currentMenu);
+    if (item?.type === 'tool') {
+      this.showOptionsFor(this.currentMenu);
+    }
   }
   getWorkspace() {
     return this.swpRoot.querySelector('.swp-workspace');
@@ -6855,6 +8007,14 @@ class UI {
       this.swpRoot.remove();
       this.swpRoot = null;
     }
+    if (this._exportOverlay?.isConnected) this._exportOverlay.remove();
+    this._exportOverlay = null;
+    if (this._onDragOver) this.container.removeEventListener('dragover', this._onDragOver);
+    if (this._onDragLeave) this.container.removeEventListener('dragleave', this._onDragLeave);
+    if (this._onDrop) this.container.removeEventListener('drop', this._onDrop);
+    if (this._onPaste) document.removeEventListener('paste', this._onPaste);
+    this.toast?.destroy();
+    this.dialog?.destroy();
     this.container.classList.remove('swp-app');
     this.container = null;
   }
@@ -6863,7 +8023,7 @@ class UI {
 ;// ./src/js/io/FileManager.js
 /**
  * SenangWebs Studio - File Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 
@@ -6986,7 +8146,7 @@ class FileManager {
   async save() {
     const project = {
       name: this.projectName,
-      version: '2.0.2',
+      version: '2.2.0',
       width: this.app.canvas.width,
       height: this.app.canvas.height,
       layers: this.app.layers.toJSON()
@@ -7009,16 +8169,17 @@ class FileManager {
     this.projectName = `${this.projectName}_${Date.now()}`;
     await this.save();
   }
-  async export(format = 'png', quality = 1) {
+  async export(format = 'png', quality = 1, name = null) {
     const mimeType = format.startsWith('image/') ? format : `image/${format}`;
+    const filename = name && name.trim() || this.projectName;
     const dataURL = this.app.canvas.toDataURL(mimeType, quality);
     const link = document.createElement('a');
-    link.download = `${this.projectName}.${format}`;
+    link.download = `${filename}.${format}`;
     link.href = dataURL;
     link.click();
     this.app.events.emit(Events.DOCUMENT_EXPORT, {
       format,
-      name: this.projectName
+      name: filename
     });
   }
   async exportAs() {
@@ -7037,7 +8198,7 @@ class FileManager {
 ;// ./src/js/io/Clipboard.js
 /**
  * SenangWebs Studio - Clipboard Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 class Clipboard {
@@ -7089,7 +8250,7 @@ class Clipboard {
 /**
  * SenangWebs Photobooth (SWP)
  * Professional browser-based image editor
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 

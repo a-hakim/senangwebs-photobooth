@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - Clipboard Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 export class Clipboard {

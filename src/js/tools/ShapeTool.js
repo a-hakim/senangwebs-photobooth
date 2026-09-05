@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Shape Tool
  * Draw geometric shapes
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -17,7 +17,7 @@ export class ShapeTool extends BaseTool {
     this.options = {
       shape: 'rectangle', // rectangle, ellipse, line, polygon
       fillColor: '#000000',
-      strokeColor: 'transparent',
+      strokeColor: '#000000',
       strokeWidth: 2,
       filled: true,
       stroked: false,
@@ -28,6 +28,18 @@ export class ShapeTool extends BaseTool {
     
     // Preview state
     this.previewShape = null;
+  }
+
+  /**
+   * Resolve a usable stroke color ('transparent' falls back to foreground)
+   * @returns {string}
+   */
+  _effectiveStrokeColor() {
+    const c = this.options.strokeColor;
+    if (!c || c === 'transparent' || c === 'none') {
+      return this.app.colors?.foreground || '#000000';
+    }
+    return c;
   }
 
   onPointerDown(e) {
@@ -57,9 +69,16 @@ export class ShapeTool extends BaseTool {
         });
         layer.shapeType = this.options.shape;
         layer.shapeData = shape;
-        layer.fillColor = this.options.filled ? this.options.fillColor : 'transparent';
-        layer.strokeColor = this.options.stroked ? this.options.strokeColor : 'transparent';
-        layer.strokeWidth = this.options.strokeWidth;
+        if (this.options.shape === 'line') {
+          // Lines are stroked only — always carry a visible stroke color
+          layer.fillColor = 'transparent';
+          layer.strokeColor = this._effectiveStrokeColor();
+          layer.strokeWidth = Math.max(1, this.options.strokeWidth);
+        } else {
+          layer.fillColor = this.options.filled ? this.options.fillColor : 'transparent';
+          layer.strokeColor = this.options.stroked ? this._effectiveStrokeColor() : 'transparent';
+          layer.strokeWidth = this.options.strokeWidth;
+        }
         
         this.app.layers.setActiveLayer(layer.id);
       } else {
@@ -143,7 +162,7 @@ export class ShapeTool extends BaseTool {
     ctx.save();
     
     ctx.fillStyle = this.options.filled ? this.options.fillColor : 'transparent';
-    ctx.strokeStyle = this.options.stroked ? this.options.strokeColor : 'transparent';
+    ctx.strokeStyle = this.options.stroked ? this._effectiveStrokeColor() : 'transparent';
     ctx.lineWidth = this.options.strokeWidth;
     
     switch (this.options.shape) {
@@ -204,10 +223,17 @@ export class ShapeTool extends BaseTool {
   drawLine(ctx, shape) {
     const { points } = shape;
     
+    ctx.save();
+    // Lines are stroke-only: ignore fill/stroke checkboxes, always visible
+    ctx.strokeStyle = this._effectiveStrokeColor();
+    ctx.lineWidth = Math.max(1, this.options.strokeWidth);
+    ctx.lineCap = 'round';
+    
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     ctx.lineTo(points[1].x, points[1].y);
     ctx.stroke();
+    ctx.restore();
   }
 
   renderOverlay(ctx) {
@@ -215,7 +241,10 @@ export class ShapeTool extends BaseTool {
     
     ctx.save();
     ctx.fillStyle = this.options.filled ? this.options.fillColor : 'transparent';
-    ctx.strokeStyle = this.options.stroked ? this.options.strokeColor : '#0066ff';
+    const previewStroke = (this.options.stroked || this.options.shape === 'line')
+      ? this._effectiveStrokeColor()
+      : '#0066ff';
+    ctx.strokeStyle = previewStroke;
     ctx.lineWidth = this.options.strokeWidth || 1;
     ctx.setLineDash([5, 5]);
     ctx.globalAlpha = 0.7;

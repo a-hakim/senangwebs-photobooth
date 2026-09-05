@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - History Manager
  * Undo/redo system with state snapshots
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { Events } from './EventEmitter.js';

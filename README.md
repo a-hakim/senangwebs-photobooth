@@ -1,8 +1,8 @@
 # SenangWebs Photobooth
 
-A browser-based image editor featuring layers, drawing tools, and filters.
+A browser-based image editor with layers, drawing tools, filters, and a mobile-first touch-friendly UX. All processing happens client-side via the HTML5 Canvas API.
 
-[![Version](https://img.shields.io/badge/Version-2.1.1-2563EB.svg)](https://www.npmjs.com/package/senangwebs-photobooth)
+[![Version](https://img.shields.io/badge/Version-2.2.0-2563EB.svg)](https://www.npmjs.com/package/senangwebs-photobooth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![Built with SenangStart Icons](https://img.shields.io/badge/Built%20with-SenangStart%20Icons-2563EB.svg)](https://github.com/bookklik-technologies/senangstart-icons)
 
@@ -15,37 +15,44 @@ A browser-based image editor featuring layers, drawing tools, and filters.
 ### Layer System
 - Multiple layers with full compositing
 - 24 blend modes (Normal, Multiply, Screen, Overlay, etc.)
-- Layer opacity, visibility, and locking
-- Merge, duplicate, and reorder layers
+- Layer opacity, visibility, locking, and renaming
+- Merge down, merge visible, duplicate, and reorder
 - Per-layer positioning (x, y offset)
 - Layer types: raster, text, shape
 - Layer serialization (toJSON / fromJSON)
-- Layers panel with real-time updates
+- Full-featured Layers panel: opacity slider, blend mode, rename, reorder, duplicate, merge, lock — all with real-time updates
 
-### History & Layers Panels
+### History & Panels
 - **History Panel** - View and navigate undo/redo history (up to 20 states)
-- **Layers Panel** - Manage layers with visibility toggles and selection
+- **Layers Panel** - Full layer management (see above)
 - Collapsible side panels with clean UI
+- Consistent undo behavior — every committed action is a labeled history state
 
 ### Editing Tools
-| Menu | Shortcut | Description |
+All tools are reachable by touch alone — no keyboard-only features.
+
+| Tool | Shortcut | Description |
 |------|----------|-------------|
-| Move | `V` | Move layers with snap-to-edges and auto-select |
-| Marquee | `M` | Rectangle and ellipse selections with feather option |
-| Crop | `C` | Crop with aspect ratio presets (Free, 1:1, 4:3, 16:9, 3:4, 9:16, Original) |
-| Rotate | - | Rotate by ±90° or custom angle slider |
-| Flip | - | Flip horizontal or vertical |
-| Resize | - | Resize canvas with presets and aspect ratio lock |
-| Brush | `B` | Brush tool with size, hardness, opacity, flow, smoothing, and pressure support |
-| Eraser | `E` | Eraser with brush/block modes, adjustable size, hardness, and opacity |
+| Move | `V` | Move layers with snap-to-edges, auto-select, and transform handles |
+| Select | `M` | Rectangle and ellipse selections with feather option |
+| Crop | `C` | Crop with aspect ratio presets (Free, 1:1, 4:3, 3:4, 16:9, 9:16, Original) |
+| Draw | `B` | Brush with size, hardness, opacity, flow, smoothing, and stylus pressure support |
+| Erase | `E` | Eraser with brush/block modes, adjustable size, hardness, and opacity |
 | Gradient | `G` | Linear, radial, and angle gradients with opacity and reverse options |
 | Fill | `G` | Flood fill with tolerance and contiguous/non-contiguous modes |
-| Shape | `U` | Rectangle, ellipse, line with fill, stroke, and corner radius options |
-| Text | `T` | Add text with font, size, color, and style controls |
-| Eyedropper | `I` | Color picker with point/3×3/5×5 sampling and layer Scope |
+| Shape | `U` | Rectangle, ellipse, and line with fill, stroke, and corner radius options |
+| Text | `T` | Add text with font, size, color, weight, style, and alignment — works with mobile virtual keyboards, IME, and paste |
+| Pick | `I` | Eyedropper with point/3×3/5×5 sampling and layer scope |
 | Zoom | `Z` | Zoom in/out with fit-to-screen and 100% buttons |
-| Hand | `H` | Pan the canvas viewport |
-| Filter | - | Apply filters with intensity control |
+| Pan | `H` / `Space` | Pan the canvas viewport |
+
+| Document Op | Description |
+|-------------|-------------|
+| Rotate | Rotate by ±90° or custom angle slider |
+| Flip | Flip horizontal or vertical |
+| Resize | Resize canvas with presets and aspect ratio lock |
+| Adjust | Live brightness/contrast/saturation sliders, double-tap to reset, press-and-hold Compare |
+| Filter | Artistic filters with live thumbnails of your image |
 
 ### Selection System
 - Rectangular and elliptical selections
@@ -55,10 +62,8 @@ A browser-based image editor featuring layers, drawing tools, and filters.
 - Selection-aware copy, cut, and paste
 
 ### Filters & Adjustments
-- Brightness, Contrast
-- Saturation, Hue Rotation
-- Blur, Sharpen
-- Grayscale, Sepia, Invert
+- **Adjust panel** — Brightness, Contrast, Saturation as live sliders with press-and-hold Compare
+- **Filter gallery** — Grayscale, Sepia, Invert, Blur, Brighten, Contrast, Saturate, Sharpen with live thumbnails of your actual image and honest intensity control (every filter responds to its slider)
 
 ### Keyboard Shortcuts
 
@@ -74,7 +79,6 @@ A browser-based image editor featuring layers, drawing tools, and filters.
 | `Ctrl+E` | Export image |
 | `Ctrl+Shift+E` | Export As |
 | `F` | Toggle fullscreen |
-| `Tab` | Toggle panels |
 | `Space` | Temporary hand tool |
 
 #### Tools
@@ -121,11 +125,25 @@ A browser-based image editor featuring layers, drawing tools, and filters.
 | `X` | Swap foreground / background colors |
 | `D` | Reset colors to black / white |
 
+### Touch & Mobile
+- Two-finger pinch-zoom and two-finger pan
+- Text editing via virtual keyboard (IME composition and paste supported)
+- All tools reachable by touch; 44px+ hit targets
+- Thumb-zone Apply/Cancel in contextual panels
+
 ### File Operations
-- Load images (PNG, JPEG, WebP)
-- Download with format selection (PNG, JPEG, WebP)
-- Save projects as `.sws` files
+- Load images via browse, drag-and-drop, or clipboard paste (PNG, JPEG, WebP)
+- Export modal with format selection (PNG/JPEG/WebP), quality slider, custom filename, and file-size estimate
+- Save projects as `.sws` files (Export modal or `Ctrl+S`)
 - Export to PNG, JPEG, WebP
+
+### UX Details
+- **Tool rail** — All 12 tools + document operations in one scrollable bar; selecting a tool opens its options sheet
+- **Color widget** — Always-visible foreground/background swatches in the header (click to edit, `X` to swap, `D` to reset)
+- **Toast notifications** — Success/error feedback for load, export, and project save
+- **Confirmation dialogs** — For destructive actions (reset, delete layer, replace document)
+- **Empty state** — Drag & drop, paste, or browse to load an image
+- **Busy indicator** — Spinner during heavy operations (filters, export, project save)
 
 ## Installation
 
@@ -136,8 +154,8 @@ npm install senangwebs-photobooth
 
 ### CDN
 ```html
-<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
-<script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.css">
+<script src="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.js"></script>
 ```
 
 ### Manual Download
@@ -153,14 +171,14 @@ SenangWebs Photobooth supports two initialization methods: JavaScript API and da
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="editor"></div>
-  <script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.js"></script>
   <script>
     const editor = new SWP('#editor', {
       width: 1920,
@@ -185,7 +203,7 @@ You can also initialize the editor using data attributes for a no-code setup:
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.css">
+  <link rel="stylesheet" href="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.css">
   <style>
     #editor { width: 100%; height: 100vh; }
   </style>
@@ -198,7 +216,7 @@ You can also initialize the editor using data attributes for a no-code setup:
        data-swp-theme="dark"
        data-swp-accent-color="#00FF99">
   </div>
-  <script src="https://unpkg.com/senangwebs-photobooth@2.1.1/dist/swp.js"></script>
+  <script src="https://unpkg.com/senangwebs-photobooth@2.2.0/dist/swp.js"></script>
 </body>
 </html>
 ```
@@ -255,8 +273,8 @@ await editor.loadImage('path/to/image.jpg');
 // Export as data URL (format: 'png'/'image/png', 'jpeg'/'image/jpeg', 'webp'/'image/webp')
 const dataURL = editor.getImageData('png', 1.0);
 
-// Download export (format: 'png', 'jpeg', or 'webp')
-editor.export('png', 1.0);
+// Download export (format: 'png', 'jpeg', or 'webp'; optional quality and filename)
+editor.export('png', 1.0, 'my-image');
 ```
 
 #### History
@@ -277,7 +295,11 @@ editor.applyFilter('brightness', { value: 20 });
 editor.applyFilter('saturation', { value: 50 });
 editor.applyFilter('hueRotate', { angle: 90 });
 editor.applyFilter('blur', { radius: 5 });
-editor.applyFilter('grayscale');
+editor.applyFilter('grayscale', { value: 100 });  // intensity-honoring (0-100)
+editor.applyFilter('sepia', { value: 80 });
+editor.applyFilter('invert', { value: 100 });
+editor.applyFilter('sharpen', { amount: 1 });
+editor.applyFilter('adjust', { brightness: 20, contrast: -10, saturation: 40 });
 ```
 
 #### Theming
@@ -520,31 +542,36 @@ editor.tools.switchToPreviousTool();                      // Switch to previous 
 
 ### Header Bar
 - **Load** - Open image file
-- **Download** - Export with format selection (PNG/JPEG/WebP)
+- **Export** - Export modal (format, quality, filename, project save)
+- **Color widget** - Live foreground/background swatches (click to edit)
 - **Undo/Redo** - History navigation
 - **History** - Toggle history panel
 - **Layers** - Toggle layers panel
-- **Reset** - Reset canvas
+- **Reset** - Reset canvas (with confirmation)
 - **Center** - Fit canvas to screen
 - **Fullscreen** - Toggle fullscreen mode
 
-### Menu Bar (Bottom)
+### Tool Rail (Bottom, scrollable)
+**Tools** (each opens its options sheet):
 - **Move** - Move and reposition layers
-- **Marquee** - Rectangle and ellipse selections
-- **Crop** - Crop with aspect ratio presets
+- **Crop** - Crop with aspect ratio presets (incl. 3:4, 9:16)
+- **Erase** - Eraser with brush/block modes
+- **Draw** - Brush with size/hardness/opacity/flow/smoothing
+- **Shape** - Draw shapes (rectangle, ellipse, line)
+- **Text** - Add and style text (mobile keyboard supported)
+- **Select** - Rectangle and ellipse marquee with feather
+- **Fill** - Flood fill with tolerance control
+- **Gradient** - Linear, radial, and angle gradients
+- **Pick** - Eyedropper color sampling
+- **Zoom** - Zoom in/out and fit to screen
+- **Pan** - Pan the canvas
+
+**Document operations** (open their panel):
 - **Rotate** - Rotate canvas by angle
 - **Flip** - Flip horizontal/vertical
 - **Resize** - Resize canvas dimensions
-- **Brush** - Paint with customizable brush
-- **Eraser** - Erase with adjustable settings
-- **Gradient** - Linear, radial, and angle gradients
-- **Fill** - Flood fill with tolerance control
-- **Shape** - Draw shapes (rectangle, ellipse, line)
-- **Text** - Add and style text
-- **Eyedropper** - Pick colors from canvas
-- **Zoom** - Zoom in/out and fit to screen
-- **Hand** - Pan the canvas
-- **Filter** - Apply image filters
+- **Adjust** - Live brightness/contrast/saturation sliders with compare
+- **Filter** - Apply image filters with live thumbnails
 
 ## Development
 
@@ -558,6 +585,15 @@ npm run dev
 # Production build
 npm run build
 ```
+
+### Smoke Test
+`examples/smoke-test.html` contains a runtime assertion suite (26 checks) covering the tool rail, options sheet, filters/adjustments, export modal, toasts/dialogs, color widget, crop ratios, text input, and the line shape. Serve the repo with any static server and open the page — results print at the bottom of the page. It can also be run headless:
+
+```bash
+msedge --headless=new --dump-dom "http://localhost/<path>/examples/smoke-test.html"
+```
+
+`examples/mobile-test.html` performs the same style of layout checks at mobile width (375px/320px) — header fit, compact tool rail, touch targets, options sheet bounds, and filter grid columns. Responsive behavior uses CSS container queries, so the UI follows the app's own width (embedded small containers get the mobile layout too).
 
 ## License
 

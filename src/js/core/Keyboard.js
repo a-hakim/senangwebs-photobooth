@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Keyboard Manager
  * Keyboard shortcuts and hotkey management
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 export class Keyboard {
@@ -74,7 +74,6 @@ export class Keyboard {
     this.register('ctrl+c', () => this.app.clipboard.copy());
     this.register('ctrl+v', () => this.app.clipboard.paste());
     this.register('ctrl+x', () => this.app.clipboard.cut());
-    this.register('ctrl+t', () => this.app.tools.startTransform());
     this.register('delete', () => this.app.layers.deleteSelection());
     this.register('backspace', () => this.app.layers.deleteSelection());
 
@@ -83,7 +82,6 @@ export class Keyboard {
     this.register('ctrl+1', () => this.app.canvas.setZoom(100));
     this.register('ctrl+plus', () => this.app.canvas.zoomIn());
     this.register('ctrl+minus', () => this.app.canvas.zoomOut());
-    this.register('tab', () => this.app.ui.togglePanels());
     this.register('f', () => this.app.ui.toggleFullscreen());
 
     // Brush size

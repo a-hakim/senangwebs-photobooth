@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Brush Tool
  * Freehand drawing with customizable brush
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';

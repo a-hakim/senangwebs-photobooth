@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SWP Mobile Layout Test</title>
+  <link rel="stylesheet" href="../dist/swp.css">
+  <style>
+    body { margin: 0; background: #333; }
+    #app { width: 375px; height: 600px; } /* pinned mobile width: container queries follow the APP, not the window */
+    #results { font-family: monospace; font-size: 12px; padding: 6px; background: #000; color: #0f0; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <pre id="results">RUNNING…</pre>
+  <script src="../dist/swp.js"></script>
+  <script>
+    const results = [];
+    const log = (msg) => { results.push(msg); document.getElementById('results').textContent = results.join('\n'); };
+    const assert = (name, cond) => log((cond ? 'PASS' : 'FAIL') + ' ' + name);
+
+    window.addEventListener('error', (e) => log('PAGE ERROR: ' + e.message));
+
+    function run() {
+      try {
+        const appW = document.getElementById('app').clientWidth;
+        log('INFO app width = ' + appW + 'px, viewport = ' + window.innerWidth + 'px');
+
+        const app = new SWP(document.getElementById('app'), { width: 800, height: 600 });
+        setTimeout(() => {
+          const root = document.querySelector('.swp-root');
+          const header = root.querySelector('.swp-header');
+          const rail = root.querySelector('.swp-menu-bar');
+
+          // 1. Header does not overflow the app
+          assert('header fits (' + header.scrollWidth + ' <= ' + appW + ')', header.scrollWidth <= appW + 1);
+
+          // 2. Header is scrollable if it ever overflows (safety net present)
+          assert('header has scroll fallback', getComputedStyle(header).overflowX === 'auto');
+
+          // 3. Rail does not overflow vertically; scrolls horizontally
+          const railH = rail.getBoundingClientRect().height;
+          assert('rail height compact (' + Math.round(railH) + 'px <= 66px)', railH <= 66);
+          assert('rail horizontally scrollable', getComputedStyle(rail).overflowX === 'auto');
+
+          // 4. All rail items visible size (touch targets)
+          const items = [...rail.querySelectorAll('.swp-menu-item')];
+          const first = items[0].getBoundingClientRect();
+          assert('rail items >= 44px tall', first.height >= 44);
+
+          // 5. Icon-only rail at this width (labels hidden)
+          const spanDisplay = getComputedStyle(items[0].querySelector('span')).display;
+          assert('rail labels hidden at mobile width', spanDisplay === 'none');
+
+          // 6. Header icon buttons are reasonably sized
+          const undoBtn = root.querySelector('[data-action="undo"]');
+          const b = undoBtn.getBoundingClientRect();
+          assert('icon buttons >= 30px (' + Math.round(b.width) + 'px)', b.width >= 30);
+
+          // 7. Color widget visible and sized
+          const cw = root.querySelector('.swp-color-widget').getBoundingClientRect();
+          assert('color widget visible (' + Math.round(cw.width) + 'px)', cw.width > 0 && cw.width <= 40);
+
+          // 8. Options sheet fits width
+          root.querySelector('[data-menu="brush"]').click();
+          setTimeout(() => {
+            const sheet = root.querySelector('.swp-submenu');
+            const sr = sheet.getBoundingClientRect();
+            assert('options sheet fits (w=' + Math.round(sr.width) + ', left=' + Math.round(sr.left) + ', appW=' + appW + ')', sr.width <= appW && sr.left >= 0);
+            assert('options sheet has controls', sheet.querySelectorAll('input, select, button').length > 0);
+            assert('options sheet within vertical bounds (bottom <= app bottom)', sheet.getBoundingClientRect().bottom <= document.getElementById('app').getBoundingClientRect().bottom + 1);
+
+            // 9. Filter grid is 2-col at this width
+            root.querySelector('[data-menu="filter"]').click();
+            setTimeout(() => {
+              const grid = root.querySelector('.swp-filter-grid');
+              const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+              assert('filter grid 2-col at mobile width (got ' + cols + ')', cols === 2);
+
+              // 10. Side panel never wider than app
+              root.querySelector('[data-action="layers"]').click();
+              setTimeout(() => {
+                const panel = root.querySelector('.swp-side-panel');
+                const pr = panel.getBoundingClientRect();
+                assert('side panel fits (' + Math.round(pr.width) + ' <= ' + appW + ')', pr.width <= appW);
+
+                const failCount = results.filter(r => r.startsWith('FAIL') || r.startsWith('PAGE ERROR')).length;
+                log('DONE ' + (failCount === 0 ? 'ALL PASS' : failCount + ' FAILURES'));
+              }, 150);
+            }, 150);
+          }, 150);
+        }, 300);
+      } catch (err) {
+        log('FATAL: ' + err.message);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run);
+    } else {
+      run();
+    }
+  </script>
+</body>
+</html>

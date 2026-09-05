@@ -1,6 +1,6 @@
 /**
  * SenangWebs Studio - File Manager
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { Events } from '../core/EventEmitter.js';
@@ -129,7 +129,7 @@ export class FileManager {
   async save() {
     const project = {
       name: this.projectName,
-      version: '2.0.2',
+      version: '2.2.0',
       width: this.app.canvas.width,
       height: this.app.canvas.height,
       layers: this.app.layers.toJSON()
@@ -153,15 +153,16 @@ export class FileManager {
     await this.save();
   }
 
-  async export(format = 'png', quality = 1) {
+  async export(format = 'png', quality = 1, name = null) {
     const mimeType = format.startsWith('image/') ? format : `image/${format}`;
+    const filename = (name && name.trim()) || this.projectName;
     const dataURL = this.app.canvas.toDataURL(mimeType, quality);
     const link = document.createElement('a');
-    link.download = `${this.projectName}.${format}`;
+    link.download = `${filename}.${format}`;
     link.href = dataURL;
     link.click();
 
-    this.app.events.emit(Events.DOCUMENT_EXPORT, { format, name: this.projectName });
+    this.app.events.emit(Events.DOCUMENT_EXPORT, { format, name: filename });
   }
 
   async exportAs() {

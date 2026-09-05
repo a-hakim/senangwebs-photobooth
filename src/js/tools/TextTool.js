@@ -1,7 +1,7 @@
 /**
  * SenangWebs Photobooth - Text Tool
  * Add and edit text layers
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -27,44 +27,103 @@ export class TextTool extends BaseTool {
     
     // Text editing state
     this.editingLayer = null;
-    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this._inputEl = null;
+    this._onInput = this._handleInput.bind(this);
+    this._onInputKeyDown = this._handleInputKeyDown.bind(this);
+    this._onInputBlur = this._handleInputBlur.bind(this);
   }
 
   onActivate() {
     super.onActivate();
-    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   onDeactivate() {
     this.commitText();
-    document.removeEventListener('keydown', this.handleKeyDown);
+    this._removeInput();
     super.onDeactivate();
   }
 
-  handleKeyDown(e) {
-    if (!this.editingLayer) return;
-    
-    // Don't process if modifier keys are pressed (let shortcuts work)
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const key = e.key;
-    
-    if (key === 'Backspace') {
-      this.editingLayer.textContent = this.editingLayer.textContent.slice(0, -1);
-    } else if (key === 'Enter') {
-      this.editingLayer.textContent += '\n';
-    } else if (key === 'Escape') {
-      this.commitText();
-      return;
-    } else if (key.length === 1) {
-      // Single character - add to text
-      this.editingLayer.textContent += key;
+  /**
+   * Create (once) and show the hidden textarea used for text entry.
+   * Uses a real input so mobile virtual keyboards, IME and paste all work.
+   */
+  _ensureInput() {
+    if (this._inputEl?.isConnected) return this._inputEl;
+    const workspace = this.app.ui.getWorkspace();
+    if (!workspace) return null;
+
+    const input = document.createElement('textarea');
+    input.className = 'swp-text-input';
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('aria-label', 'Text editor');
+    input.rows = 1;
+    input.addEventListener('input', this._onInput);
+    input.addEventListener('keydown', this._onInputKeyDown);
+    input.addEventListener('blur', this._onInputBlur);
+    workspace.appendChild(input);
+    this._inputEl = input;
+    return input;
+  }
+
+  _removeInput() {
+    if (this._inputEl) {
+      this._inputEl.removeEventListener('input', this._onInput);
+      this._inputEl.removeEventListener('keydown', this._onInputKeyDown);
+      this._inputEl.removeEventListener('blur', this._onInputBlur);
+      this._inputEl.remove();
+      this._inputEl = null;
     }
-    
+  }
+
+  _handleInput(e) {
+    if (!this.editingLayer) return;
+    this.editingLayer.textContent = e.target.value;
     this.app.canvas.scheduleRender();
+  }
+
+  _handleInputKeyDown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      this.commitText();
+      this._removeInput();
+    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.commitText();
+      this._removeInput();
+    }
+    // Plain Enter / Backspace / characters: native textarea behavior
+  }
+
+  _handleInputBlur(e) {
+    // Don't commit when focus moves into the options sheet (style tweaking)
+    if (e.relatedTarget && e.relatedTarget.closest?.('.swp-submenu')) return;
+    if (this.editingLayer) {
+      this.commitText();
+      this._removeInput();
+    }
+  }
+
+  /**
+   * Position the hidden input near the text being edited (helps mobile
+   * scroll the virtual keyboard into view without covering the text).
+   */
+  _positionInput(layer) {
+    if (!this._inputEl) return;
+    const bounds = this.getTextBounds(layer);
+    const canvas = this.app.canvas;
+    const workspace = this.app.ui.getWorkspace();
+    if (!workspace) return;
+    const wsRect = workspace.getBoundingClientRect();
+
+    const scale = (canvas.zoom || 100) / 100;
+    const x = wsRect.left + (canvas.panX || 0) + bounds.x * scale;
+    const y = wsRect.top + (canvas.panY || 0) + bounds.y * scale;
+    this._inputEl.style.left = `${Math.max(0, Math.round(x - wsRect.left))}px`;
+    this._inputEl.style.top = `${Math.max(0, Math.round(y - wsRect.top))}px`;
   }
 
   onPointerDown(e) {
@@ -145,6 +204,14 @@ export class TextTool extends BaseTool {
 
   startEditingLayer(layer) {
     this.editingLayer = layer;
+
+    const input = this._ensureInput();
+    if (input) {
+      input.value = layer.textContent || '';
+      this._positionInput(layer);
+      input.focus({ preventScroll: false });
+    }
+
     this.app.canvas.scheduleRender();
   }
 
@@ -159,6 +226,7 @@ export class TextTool extends BaseTool {
     }
     
     this.editingLayer = null;
+    this._removeInput();
     this.app.canvas.scheduleRender();
   }
 

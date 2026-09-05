@@ -1,7 +1,7 @@
 /**
  * SenangWebs Studio - Crop Tool
  * Crop the canvas
- * @version 2.0.2
+ * @version 2.2.0
  */
 
 import { BaseTool } from './BaseTool.js';
@@ -168,6 +168,9 @@ export class CropTool extends BaseTool {
    * @returns {number|null}
    */
   getAspectRatio() {
+    if (this.options.aspectRatio === 'custom') {
+      return this.options.customRatio || null;
+    }
     switch (this.options.aspectRatio) {
       case '1:1': return 1;
       case '4:3': return 4 / 3;
